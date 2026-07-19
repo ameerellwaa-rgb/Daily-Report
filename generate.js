@@ -8,16 +8,18 @@ const REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN;
 const PORTAL_ID     = '896030705';
 
 const AM_MAP = {
-  'Esraa':          'إسراء',
-  'Jenna':          'جنة',
-  'fatema':         'فاطمة',
-  'pola':           'بولا',
-  'Habiba':         'حبيبة',
+  'Esraa Ellwaa':   'إسراء',
+  'Jenna Ellwaa':   'جنة',
+  'fatema ellwaa':  'فاطمة',
+  'pola ellwaa':    'بولا',
+  'Habiba Ellwaa':  'حبيبة',
   'sherouk ellwaa': 'شروق',
   'Youssef Mellwaa':'يوسف',
+  'Aya Ellwaa':     'آية',
+  'roya ellwaa':    'رويا',
   'Mostafa Ellwaa': 'مصطفى',
 };
-const AM_ORDER = ['Esraa','Jenna','fatema','pola','Habiba','sherouk ellwaa','Youssef Mellwaa','Mostafa Ellwaa'];
+const AM_ORDER = ['Esraa Ellwaa','Jenna Ellwaa','fatema ellwaa','pola ellwaa','Habiba Ellwaa','sherouk ellwaa','Youssef Mellwaa','Aya Ellwaa','roya ellwaa','Mostafa Ellwaa'];
 
 // ── HTTP helpers ─────────────────────────────────────────────────────────────
 function httpPost(url) {
@@ -59,27 +61,24 @@ function zohoGet(token, path) {
 }
 
 // ── Data fetchers ────────────────────────────────────────────────────────────
-async function fetchProjectsByStatus(token, status) {
+async function getAllProjects(token) {
   const out = [];
   let index = 1;
   while (true) {
-    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?status=${status}&index=${index}&range=100`);
+    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?status=active&index=${index}&range=100`);
     const batch = res.projects || [];
     out.push(...batch);
     if (batch.length < 100) break;
     index += 100;
   }
-  return out;
-}
-
-async function getAllProjects(token) {
-  const [active, onhold] = await Promise.all([
-    fetchProjectsByStatus(token, 'active'),
-    fetchProjectsByStatus(token, 'onhold'),
-  ]);
-  const all = [...active, ...onhold];
-  console.log(`✓ ${active.length} active + ${onhold.length} on hold = ${all.length} total projects`);
-  return all;
+  // Keep only Active and On Hold projects
+  const KEEP = new Set(['active', 'on hold', 'onhold']);
+  const filtered = out.filter(p => {
+    const s = (p.status || '').toLowerCase();
+    return KEEP.has(s);
+  });
+  console.log(`✓ ${out.length} total → ${filtered.length} active+onhold projects`);
+  return filtered;
 }
 
 async function getProjectData(token, projectId) {
@@ -114,15 +113,6 @@ async function main() {
     const name = p.owner_name || (p.owner && p.owner.name) || '';
     return [p.id_string, EXCLUDE.has(name) ? '' : name];
   }));
-
-  // DEBUG: print all unique owner names from REST API
-  const uniqueOwners = {};
-  for (const name of Object.values(ownerMap)) {
-    if (name) uniqueOwners[name] = (uniqueOwners[name] || 0) + 1;
-  }
-  console.log('\n=== OWNER NAMES FROM REST API ===');
-  Object.entries(uniqueOwners).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>console.log(`  "${n}": ${c}`));
-  console.log('=================================\n');
 
   // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
