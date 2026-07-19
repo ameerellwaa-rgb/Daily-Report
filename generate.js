@@ -111,14 +111,15 @@ async function main() {
   // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
 
-  // DEBUG: check first project's tasks
+  // DEBUG: check first project's tasks raw response
   const debugProj = projects[0];
-  const debugData = await getProjectData(token, debugProj.id_string);
-  console.log(`DEBUG project[0] id_string=${debugProj.id_string} tasks=${debugData.tasks.length} milestones=${debugData.milestones.length}`);
-  if (debugData.tasks.length > 0) {
-    const t = debugData.tasks[0];
-    console.log(`DEBUG task[0]: name="${t.name}" status=${JSON.stringify(t.status)}`);
-  }
+  console.log(`DEBUG project[0] id=${debugProj.id} id_string=${debugProj.id_string}`);
+  const rawTasks = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${debugProj.id_string}/tasks/?status=all`).catch(e => ({ ERROR: e.message }));
+  console.log(`DEBUG tasks raw keys: ${Object.keys(rawTasks).join(', ')}`);
+  console.log(`DEBUG tasks raw (first 300 chars): ${JSON.stringify(rawTasks).slice(0, 300)}`);
+  const rawTasksById = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${debugProj.id}/tasks/?status=all`).catch(e => ({ ERROR: e.message }));
+  console.log(`DEBUG tasks by id raw keys: ${Object.keys(rawTasksById).join(', ')}`);
+  console.log(`DEBUG tasks by id (first 300 chars): ${JSON.stringify(rawTasksById).slice(0, 300)}`);
 
   // Process in batches of 10 concurrent requests
   const BATCH = 10;
