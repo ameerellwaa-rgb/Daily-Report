@@ -61,52 +61,71 @@ function zohoGet(token, path) {
 }
 
 // ── Data fetchers ────────────────────────────────────────────────────────────
+async function debugAPIs(token) {
+  const h = { Authorization: `Zoho-oauthtoken ${token}` };
+  const tests = [
+    // v2 without status filter
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/`,
+    // v2 with all
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=all`,
+    // v3 portals list
+    `https://projectsapi.zoho.com/api/v3/portals/`,
+    // v3 portal singular
+    `https://projectsapi.zoho.com/api/v3/portal/${PORTAL_ID}/projects/`,
+    // v3 portals plural
+    `https://projectsapi.zoho.com/api/v3/portals/${PORTAL_ID}/projects/`,
+  ];
+  const results = {};
+  for (const url of tests) {
+    const res = await httpGet(url, h).catch(e => ({ _fetchError: e.message }));
+    const key = url.replace('https://projectsapi.zoho.com', '');
+    results[key] = {
+      topKeys: Object.keys(res),
+      error: res.error || null,
+      raw: JSON.stringify(res).slice(0, 300),
+    };
+    // Also capture status values from first batch in v2 call
+    if (url.includes('/restapi/') && !res.error && !res._fetchError) {
+      const projs = res.projects || [];
+      const statuses = [...new Set(projs.map(p => JSON.stringify(p.status || p.project_status || 'N/A')))];
+      results[key].statusSample = statuses;
+      results[key].count = projs.length;
+    }
+  }
+  fs.writeFileSync('debug.json', JSON.stringify({ tests: results, ts: new Date().toISOString() }, null, 2));
+  console.log('debug.json written with API test results');
+}
+
 async function getAllProjects(token) {
+  // Run API diagnostics first
+  await debugAPIs(token);
+  console.log('See debug.json for API test results. Falling back to v2...');
+
+  // Use v2 API — returns all projects; filter by status string
   const out = [];
   let page = 1;
   while (true) {
-    // v3 API returns proper status objects
     const res = await httpGet(
-      `https://projectsapi.zoho.com/api/v3/portals/${PORTAL_ID}/projects/?per_page=100&page=${page}`,
+      `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?index=${(page-1)*100+1}&range=100`,
       { Authorization: `Zoho-oauthtoken ${token}` }
-    ).catch(e => { console.error('v3 fetch error:', e.message); return {}; });
-
-    // Debug: dump first page response to file so we can inspect it
-    if (page === 1) {
-      const debugInfo = {
-        keys: Object.keys(res),
-        hasError: !!res.error,
-        error: res.error,
-        dataType: res.data === undefined ? 'undefined' : Array.isArray(res.data) ? 'array' : typeof res.data,
-        dataLength: Array.isArray(res.data) ? res.data.length : undefined,
-        dataKeys: res.data && !Array.isArray(res.data) ? Object.keys(res.data) : undefined,
-        projectsType: Array.isArray(res.projects) ? 'array' : typeof res.projects,
-        projectsLength: Array.isArray(res.projects) ? res.projects.length : undefined,
-        // first 500 chars of raw object for inspection
-        rawSample: JSON.stringify(res).slice(0, 500),
-      };
-      console.log('v3 debug:', JSON.stringify(debugInfo, null, 2));
-      fs.writeFileSync('debug.json', JSON.stringify({ v3Response: debugInfo, ts: new Date().toISOString() }, null, 2));
-    }
-
-    // Handle multiple possible v3 response formats
-    let batch = [];
-    if (Array.isArray(res.data))                   batch = res.data;
-    else if (res.data && Array.isArray(res.data.result)) batch = res.data.result;
-    else if (Array.isArray(res.projects))           batch = res.projects;
-    else if (res.data && Array.isArray(res.data.projects)) batch = res.data.projects;
-
-    if (page === 1) console.log('batch length from page1:', batch.length);
+    ).catch(() => ({}));
+    const batch = res.projects || [];
     out.push(...batch);
     if (batch.length < 100) break;
     page++;
   }
-  // Filter: Active or On Hold only
+
+  // Filter by status — check both string and object
   const keep = out.filter(p => {
-    const s = (p.status && p.status.name) || '';
-    return s === 'Active' || s === 'On Hold';
+    const s = typeof p.status === 'object'
+      ? (p.status.name || '').toLowerCase()
+      : (p.status || '').toLowerCase();
+    return s === 'active' || s === 'on hold' || s === 'onhold';
   });
-  console.log(`✓ ${out.length} total → ${keep.length} active+onhold projects`);
+  console.log(`✓ v2: ${out.length} total → ${keep.length} after status filter`);
+  // Log unique statuses found
+  const statuses = [...new Set(out.map(p => typeof p.status === 'object' ? JSON.stringify(p.status) : p.status))];
+  console.log('Unique statuses in v2:', statuses.join(' | '));
   return keep;
 }
 
