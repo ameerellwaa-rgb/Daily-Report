@@ -8,13 +8,16 @@ const REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN;
 const PORTAL_ID     = '896030705';
 
 const AM_MAP = {
-  'Esraa Ellwaa':  'إسراء',
-  'Jenna Ellwaa':  'جنة',
-  'Aya Ellwaa':    'آية',
-  'fatema ellwaa': 'فاطمة',
-  'pola ellwaa':   'بولا',
+  'Esraa':          'إسراء',
+  'Jenna':          'جنة',
+  'fatema':         'فاطمة',
+  'pola':           'بولا',
+  'Habiba':         'حبيبة',
+  'sherouk ellwaa': 'شروق',
+  'Youssef Mellwaa':'يوسف',
+  'Mostafa Ellwaa': 'مصطفى',
 };
-const AM_ORDER = ['Esraa Ellwaa','Jenna Ellwaa','Aya Ellwaa','fatema ellwaa','pola ellwaa'];
+const AM_ORDER = ['Esraa','Jenna','fatema','pola','Habiba','sherouk ellwaa','Youssef Mellwaa','Mostafa Ellwaa'];
 
 // ── HTTP helpers ─────────────────────────────────────────────────────────────
 function httpPost(url) {
@@ -56,18 +59,27 @@ function zohoGet(token, path) {
 }
 
 // ── Data fetchers ────────────────────────────────────────────────────────────
-async function getAllProjects(token) {
+async function fetchProjectsByStatus(token, status) {
   const out = [];
   let index = 1;
   while (true) {
-    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?status=active&index=${index}&range=100`);
+    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?status=${status}&index=${index}&range=100`);
     const batch = res.projects || [];
     out.push(...batch);
     if (batch.length < 100) break;
     index += 100;
   }
-  console.log(`✓ ${out.length} active projects`);
   return out;
+}
+
+async function getAllProjects(token) {
+  const [active, onhold] = await Promise.all([
+    fetchProjectsByStatus(token, 'active'),
+    fetchProjectsByStatus(token, 'onhold'),
+  ]);
+  const all = [...active, ...onhold];
+  console.log(`✓ ${active.length} active + ${onhold.length} on hold = ${all.length} total projects`);
+  return all;
 }
 
 async function getProjectData(token, projectId) {
@@ -97,7 +109,11 @@ async function main() {
   const token    = await getAccessToken();
   const projects = await getAllProjects(token);
 
-  const ownerMap = Object.fromEntries(projects.map(p => [p.id_string, p.owner_name || '']));
+  const EXCLUDE = new Set(['Walid Mohsen']);
+  const ownerMap = Object.fromEntries(projects.map(p => {
+    const name = p.owner_name || (p.owner && p.owner.name) || '';
+    return [p.id_string, EXCLUDE.has(name) ? '' : name];
+  }));
 
   // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
