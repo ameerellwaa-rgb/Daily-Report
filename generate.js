@@ -71,15 +71,22 @@ async function getAllProjects(token) {
       { Authorization: `Zoho-oauthtoken ${token}` }
     ).catch(e => { console.error('v3 fetch error:', e.message); return {}; });
 
-    // Debug: log raw response keys on first page so we can see the structure
+    // Debug: dump first page response to file so we can inspect it
     if (page === 1) {
-      const keys = Object.keys(res);
-      console.log('v3 page1 keys:', keys.join(','));
-      if (res.error) console.log('v3 error:', JSON.stringify(res.error));
-      if (res.data !== undefined) {
-        if (Array.isArray(res.data)) console.log('res.data is array, length:', res.data.length);
-        else console.log('res.data keys:', Object.keys(res.data).join(','));
-      }
+      const debugInfo = {
+        keys: Object.keys(res),
+        hasError: !!res.error,
+        error: res.error,
+        dataType: res.data === undefined ? 'undefined' : Array.isArray(res.data) ? 'array' : typeof res.data,
+        dataLength: Array.isArray(res.data) ? res.data.length : undefined,
+        dataKeys: res.data && !Array.isArray(res.data) ? Object.keys(res.data) : undefined,
+        projectsType: Array.isArray(res.projects) ? 'array' : typeof res.projects,
+        projectsLength: Array.isArray(res.projects) ? res.projects.length : undefined,
+        // first 500 chars of raw object for inspection
+        rawSample: JSON.stringify(res).slice(0, 500),
+      };
+      console.log('v3 debug:', JSON.stringify(debugInfo, null, 2));
+      fs.writeFileSync('debug.json', JSON.stringify({ v3Response: debugInfo, ts: new Date().toISOString() }, null, 2));
     }
 
     // Handle multiple possible v3 response formats
