@@ -67,7 +67,7 @@ async function getAllProjects(token) {
   while (true) {
     // v3 API returns proper status objects
     const res = await httpGet(
-      `https://projectsapi.zoho.com/api/v3/portal/${PORTAL_ID}/projects/?per_page=100&page=${page}`,
+      `https://projectsapi.zoho.com/api/v3/portals/${PORTAL_ID}/projects/?per_page=100&page=${page}`,
       { Authorization: `Zoho-oauthtoken ${token}` }
     ).catch(e => { console.error('v3 fetch error:', e.message); return {}; });
 
