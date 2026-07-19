@@ -115,6 +115,15 @@ async function main() {
     return [p.id_string, EXCLUDE.has(name) ? '' : name];
   }));
 
+  // DEBUG: print all unique owner names from REST API
+  const uniqueOwners = {};
+  for (const name of Object.values(ownerMap)) {
+    if (name) uniqueOwners[name] = (uniqueOwners[name] || 0) + 1;
+  }
+  console.log('\n=== OWNER NAMES FROM REST API ===');
+  Object.entries(uniqueOwners).sort((a,b)=>b[1]-a[1]).forEach(([n,c])=>console.log(`  "${n}": ${c}`));
+  console.log('=================================\n');
+
   // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
 
