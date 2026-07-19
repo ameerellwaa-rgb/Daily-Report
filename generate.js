@@ -75,15 +75,51 @@ async function getAllProjects(token) {
   return out;
 }
 
-async function getProjectData(token, projectId) {
-  const [tasksRes, msRes] = await Promise.all([
-    zohoGet(token, `/portal/${PORTAL_ID}/projects/${projectId}/tasks/?status=all`).catch(() => ({})),
-    zohoGet(token, `/portal/${PORTAL_ID}/projects/${projectId}/milestones/`).catch(() => ({})),
-  ]);
-  return {
-    tasks:      tasksRes.tasks      || [],
-    milestones: msRes.milestones    || [],
-  };
+async function getAllPortalTasks(token) {
+  const out = [];
+  let index = 1;
+  while (true) {
+    const res = await zohoGet(token, `/portal/${PORTAL_ID}/tasks/?index=${index}&range=100&status=all`).catch(() => ({}));
+    const batch = res.tasks || [];
+    out.push(...batch);
+    console.log(`  tasks fetched: ${out.length}`);
+    if (batch.length < 100) break;
+    index += 100;
+  }
+  // Group by project id_string
+  const byProject = {};
+  for (const t of out) {
+    const pid = t.project_id || (t.project && (t.project.id_string || t.project.id));
+    if (pid) {
+      if (!byProject[pid]) byProject[pid] = [];
+      byProject[pid].push(t);
+    }
+  }
+  console.log(`✓ ${out.length} tasks across ${Object.keys(byProject).length} projects`);
+  return byProject;
+}
+
+async function getAllPortalMilestones(token) {
+  const out = [];
+  let index = 1;
+  while (true) {
+    const res = await zohoGet(token, `/portal/${PORTAL_ID}/milestones/?index=${index}&range=100`).catch(() => ({}));
+    const batch = res.milestones || [];
+    out.push(...batch);
+    console.log(`  milestones fetched: ${out.length}`);
+    if (batch.length < 100) break;
+    index += 100;
+  }
+  const byProject = {};
+  for (const m of out) {
+    const pid = m.project_id || (m.project && (m.project.id_string || m.project.id));
+    if (pid) {
+      if (!byProject[pid]) byProject[pid] = [];
+      byProject[pid].push(m);
+    }
+  }
+  console.log(`✓ ${out.length} milestones across ${Object.keys(byProject).length} projects`);
+  return byProject;
 }
 
 // ── Logic helpers ─────────────────────────────────────────────────────────────
@@ -111,47 +147,37 @@ async function main() {
   // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
 
-  // DEBUG: check first project's tasks raw response
-  const debugProj = projects[0];
-  console.log(`DEBUG project[0] id=${debugProj.id} id_string=${debugProj.id_string}`);
-  const rawTasks = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${debugProj.id_string}/tasks/?status=all`).catch(e => ({ ERROR: e.message }));
-  console.log(`DEBUG tasks raw keys: ${Object.keys(rawTasks).join(', ')}`);
-  console.log(`DEBUG tasks raw (first 300 chars): ${JSON.stringify(rawTasks).slice(0, 300)}`);
-  const rawTasksById = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${debugProj.id}/tasks/?status=all`).catch(e => ({ ERROR: e.message }));
-  console.log(`DEBUG tasks by id raw keys: ${Object.keys(rawTasksById).join(', ')}`);
-  console.log(`DEBUG tasks by id (first 300 chars): ${JSON.stringify(rawTasksById).slice(0, 300)}`);
+  const [tasksByProject, milestonesByProject] = await Promise.all([
+    getAllPortalTasks(token),
+    getAllPortalMilestones(token),
+  ]);
 
-  // Process in batches of 10 concurrent requests
-  const BATCH = 10;
-  for (let i = 0; i < projects.length; i += BATCH) {
-    const slice = projects.slice(i, i + BATCH);
-    const results = await Promise.all(slice.map(p => getProjectData(token, p.id_string)));
+  let processed = 0;
+  for (const p of projects) {
+    const pid    = p.id_string;
+    const owner  = ownerMap[pid];
+    const tasks      = tasksByProject[pid]      || tasksByProject[p.id] || [];
+    const milestones = milestonesByProject[pid] || milestonesByProject[p.id] || [];
 
-    results.forEach((res, j) => {
-      const pid   = slice[j].id_string;
-      const owner = ownerMap[pid];
-      const { tasks, milestones } = res;
+    const licDone   = hasTask(tasks,     'صدور الترخيص',                      'finished');
+    const recvOpen  = hasTask(tasks,     'استلام بيانات الترخيص',              'open');
+    const collOpen  = hasTask(tasks,     'جمع بيانات الترخيص',                 'open');
+    const overOpen  = hasTask(tasks,     'موافقة العميل على الاوفر فيو',        'open');
+    const sijilOpen = hasTaskLike(tasks, 'تسليم نسخة من السجل التجارى',        'open');
+    const amerOpen  = hasTaskLike(tasks, 'عمل شركة  امريكا',                   'open'); // مسافتان
 
-      const licDone   = hasTask(tasks,     'صدور الترخيص',                      'finished');
-      const recvOpen  = hasTask(tasks,     'استلام بيانات الترخيص',              'open');
-      const collOpen  = hasTask(tasks,     'جمع بيانات الترخيص',                 'open');
-      const overOpen  = hasTask(tasks,     'موافقة العميل على الاوفر فيو',        'open');
-      const sijilOpen = hasTaskLike(tasks, 'تسليم نسخة من السجل التجارى',        'open');
-      const amerOpen  = hasTaskLike(tasks, 'عمل شركة  امريكا',                   'open'); // مسافتان
+    const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
+    const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
 
-      const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
-      const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
-
-      if (licDone && m2 && ms(m2) !== 'completed')                             buckets.p2[pid]   = owner;
-      if (m2 && ms(m2) === 'completed' && m3 && ms(m3) !== 'completed')        buckets.p3[pid]   = owner;
-      if (recvOpen)                                                              buckets.recv[pid] = owner;
-      if (collOpen && recvOpen)                                                  buckets.coll[pid] = owner;
-      if (overOpen && !sijilOpen)                                                buckets.over[pid] = owner;
-      if (amerOpen)                                                              buckets.amer[pid] = owner;
-    });
-
-    console.log(`  ${Math.min(i + BATCH, projects.length)} / ${projects.length} projects processed`);
+    if (licDone && m2 && ms(m2) !== 'completed')                           buckets.p2[pid]   = owner;
+    if (m2 && ms(m2) === 'completed' && m3 && ms(m3) !== 'completed')      buckets.p3[pid]   = owner;
+    if (recvOpen)                                                            buckets.recv[pid] = owner;
+    if (collOpen && recvOpen)                                                buckets.coll[pid] = owner;
+    if (overOpen && !sijilOpen)                                              buckets.over[pid] = owner;
+    if (amerOpen)                                                            buckets.amer[pid] = owner;
+    processed++;
   }
+  console.log(`✓ ${processed} projects analyzed`);
 
   // Summarize: total + per AM
   function summarize(bucket) {
