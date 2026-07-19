@@ -97,9 +97,12 @@ async function debugAPIs(token) {
 }
 
 async function getAllProjects(token) {
-  // Run API diagnostics first
+  // Run API diagnostics first, then exit so debug.json gets committed
   await debugAPIs(token);
-  console.log('See debug.json for API test results. Falling back to v2...');
+  console.log('DEBUG MODE: exiting after API tests. See debug.json in repo.');
+  // Write a placeholder index.html so the commit step has something to push
+  if (!fs.existsSync('index.html')) fs.writeFileSync('index.html', '<!-- debug run -->');
+  process.exit(0);
 
   // Use v2 API — returns all projects; filter by status string
   const out = [];
