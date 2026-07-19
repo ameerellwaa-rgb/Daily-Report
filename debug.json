@@ -1,23 +1,77 @@
 {
-  "v3Response": {
-    "keys": [
-      "error"
-    ],
-    "hasError": true,
-    "error": {
-      "status_code": "400",
-      "instance": "/api/v3/portals/896030705/projects/",
-      "title": "URL_RULE_NOT_CONFIGURED",
-      "error_type": "FIELDS_VALIDATION_ERROR",
-      "details": [
-        {
-          "message": "Given URL is wrong"
-        }
-      ]
+  "tests": {
+    "/restapi/portal/896030705/projects/": {
+      "topKeys": [
+        "projects"
+      ],
+      "error": null,
+      "raw": "{\"projects\":[{\"is_strict\":\"no\",\"bug_count\":{\"closed\":0,\"open\":0},\"owner_id\":\"898471283\",\"bug_client_permission\":\"allexternal\",\"taskbug_prefix\":\"10C0\",\"start_date_long\":1784415600000,\"updated_date_long\":1784466698217,\"show_project_overview\":true,\"task_count\":{\"closed\":0,\"open\":56},\"updated_date_forma",
+      "statusSample": [
+        "\"active\""
+      ],
+      "count": 100
     },
-    "dataType": "undefined",
-    "projectsType": "undefined",
-    "rawSample": "{\"error\":{\"status_code\":\"400\",\"instance\":\"/api/v3/portals/896030705/projects/\",\"title\":\"URL_RULE_NOT_CONFIGURED\",\"error_type\":\"FIELDS_VALIDATION_ERROR\",\"details\":[{\"message\":\"Given URL is wrong\"}]}}"
+    "/restapi/portal/896030705/projects/?status=all": {
+      "topKeys": [
+        "error"
+      ],
+      "error": {
+        "code": 6891,
+        "message": "Given URL is wrong"
+      },
+      "raw": "{\"error\":{\"code\":6891,\"message\":\"Given URL is wrong\"}}"
+    },
+    "/api/v3/portals/": {
+      "topKeys": [
+        "error"
+      ],
+      "error": {
+        "status_code": "400",
+        "instance": "/api/v3/portals/",
+        "title": "URL_RULE_NOT_CONFIGURED",
+        "error_type": "FIELDS_VALIDATION_ERROR",
+        "details": [
+          {
+            "message": "Given URL is wrong"
+          }
+        ]
+      },
+      "raw": "{\"error\":{\"status_code\":\"400\",\"instance\":\"/api/v3/portals/\",\"title\":\"URL_RULE_NOT_CONFIGURED\",\"error_type\":\"FIELDS_VALIDATION_ERROR\",\"details\":[{\"message\":\"Given URL is wrong\"}]}}"
+    },
+    "/api/v3/portal/896030705/projects/": {
+      "topKeys": [
+        "error"
+      ],
+      "error": {
+        "status_code": "400",
+        "instance": "/api/v3/portal/896030705/projects/",
+        "title": "URL_RULE_NOT_CONFIGURED",
+        "error_type": "FIELDS_VALIDATION_ERROR",
+        "details": [
+          {
+            "message": "Given URL is wrong"
+          }
+        ]
+      },
+      "raw": "{\"error\":{\"status_code\":\"400\",\"instance\":\"/api/v3/portal/896030705/projects/\",\"title\":\"URL_RULE_NOT_CONFIGURED\",\"error_type\":\"FIELDS_VALIDATION_ERROR\",\"details\":[{\"message\":\"Given URL is wrong\"}]}}"
+    },
+    "/api/v3/portals/896030705/projects/": {
+      "topKeys": [
+        "error"
+      ],
+      "error": {
+        "status_code": "400",
+        "instance": "/api/v3/portals/896030705/projects/",
+        "title": "URL_RULE_NOT_CONFIGURED",
+        "error_type": "FIELDS_VALIDATION_ERROR",
+        "details": [
+          {
+            "message": "Given URL is wrong"
+          }
+        ]
+      },
+      "raw": "{\"error\":{\"status_code\":\"400\",\"instance\":\"/api/v3/portals/896030705/projects/\",\"title\":\"URL_RULE_NOT_CONFIGURED\",\"error_type\":\"FIELDS_VALIDATION_ERROR\",\"details\":[{\"message\":\"Given URL is wrong\"}]}}"
+    }
   },
-  "ts": "2026-07-19T14:16:39.411Z"
+  "ts": "2026-07-19T14:26:35.140Z"
 }
