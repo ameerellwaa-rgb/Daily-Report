@@ -8,20 +8,21 @@ const REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN;
 const PORTAL_ID     = '896030705';
 
 const AM_MAP = {
-  'Esraa Ellwaa':   'إسراء',
-  'Jenna Ellwaa':   'جنة',
-  'fatema ellwaa':  'فاطمة',
-  'pola ellwaa':    'بولا',
-  'Habiba Ellwaa':  'حبيبة',
-  'sherouk ellwaa': 'شروق',
-  'Youssef Mellwaa':'يوسف',
-  'Aya Ellwaa':     'آية',
-  'roya ellwaa':    'رويا',
-  'Mostafa Ellwaa': 'مصطفى',
+  'Esraa Ellwaa':    'إسراء',
+  'Jenna Ellwaa':    'جنة',
+  'fatema ellwaa':   'فاطمة',
+  'pola ellwaa':     'بولا',
+  'Habiba Ellwaa':   'حبيبة',
+  'sherouk ellwaa':  'شروق',
+  'Youssef Mellwaa': 'يوسف',
+  'Aya Ellwaa':      'آية',
+  'roya ellwaa':     'رويا',
+  'Mostafa Ellwaa':  'مصطفى',
 };
 const AM_ORDER = ['Esraa Ellwaa','Jenna Ellwaa','fatema ellwaa','pola ellwaa','Habiba Ellwaa','sherouk ellwaa','Youssef Mellwaa','Aya Ellwaa','roya ellwaa','Mostafa Ellwaa'];
+const EXCLUDE  = new Set(['Walid Mohsen']);
 
-// ── HTTP helpers ─────────────────────────────────────────────────────────────
+// ── HTTP helpers ──────────────────────────────────────────────────────────────
 function httpPost(url) {
   return new Promise((resolve, reject) => {
     const req = https.request(url, { method: 'POST' }, res => {
@@ -44,7 +45,33 @@ function httpGet(url, headers) {
   });
 }
 
-// ── Zoho Auth ────────────────────────────────────────────────────────────────
+// ── Rate-limit-aware request wrapper ─────────────────────────────────────────
+let reqCount = 0;
+let windowStart = Date.now();
+
+async function zohoGet(token, path) {
+  // Proactive rate limiting: stay under 85 calls per 2-minute window
+  const now = Date.now();
+  const elapsed = now - windowStart;
+  if (elapsed >= 120000) {
+    reqCount = 0;
+    windowStart = Date.now();
+  }
+  if (reqCount >= 85) {
+    const wait = 120000 - elapsed + 3000;
+    console.log(`  [rate limit] ${reqCount} calls in ${Math.round(elapsed/1000)}s — waiting ${Math.round(wait/1000)}s`);
+    await new Promise(r => setTimeout(r, wait));
+    reqCount = 0;
+    windowStart = Date.now();
+  }
+  reqCount++;
+  return httpGet(
+    `https://projectsapi.zoho.com/restapi${path}`,
+    { Authorization: `Zoho-oauthtoken ${token}` }
+  ).catch(e => { console.error('GET error:', path, e.message); return {}; });
+}
+
+// ── Auth ──────────────────────────────────────────────────────────────────────
 async function getAccessToken() {
   const url = `https://accounts.zoho.com/oauth/v2/token?grant_type=refresh_token&client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&refresh_token=${REFRESH_TOKEN}`;
   const data = await httpPost(url);
@@ -53,120 +80,41 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-function zohoGet(token, path) {
-  return httpGet(
-    `https://projectsapi.zoho.com/restapi${path}`,
-    { Authorization: `Zoho-oauthtoken ${token}` }
-  );
-}
-
-// ── Data fetchers ────────────────────────────────────────────────────────────
-async function debugAPIs(token) {
-  const h = { Authorization: `Zoho-oauthtoken ${token}` };
-  const SAMPLE_PROJECT_ID = '2533013000000061778'; // from user's URL
-  const tests = [
-    // v2 status variants
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=onhold`,
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=on_hold`,
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=inactive`,
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=archived`,
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=completed`,
-    // single project full object (to see all fields)
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/${SAMPLE_PROJECT_ID}/`,
-    // task search across portal
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/tasks/?text=%D8%A7%D8%B3%D8%AA%D9%84%D8%A7%D9%85`,
-  ];
-  const results = {};
-  for (const url of tests) {
-    const res = await httpGet(url, h).catch(e => ({ _fetchError: e.message }));
-    const key = url.replace('https://projectsapi.zoho.com', '').slice(0, 80);
-    results[key] = {
-      topKeys: Object.keys(res),
-      error: res.error || null,
-      raw: JSON.stringify(res).slice(0, 600),
-    };
-    if (!res.error && !res._fetchError) {
-      const projs = res.projects || [];
-      if (projs.length > 0) {
-        results[key].count = projs.length;
-        results[key].statusSample = [...new Set(projs.map(p => p.status || p.project_status || 'N/A'))];
-        // full first project to see all fields
-        results[key].firstProjectKeys = Object.keys(projs[0]).join(',');
-      }
-    }
-  }
-  fs.writeFileSync('debug.json', JSON.stringify({ tests: results, ts: new Date().toISOString() }, null, 2));
-  console.log('debug.json written');
-}
-
+// ── Project list (v2, no status filter = Active + On Hold) ───────────────────
 async function getAllProjects(token) {
-  // Run API diagnostics first, then exit so debug.json gets committed
-  await debugAPIs(token);
-  console.log('DEBUG MODE: exiting after API tests. See debug.json in repo.');
-  // Write a placeholder index.html so the commit step has something to push
-  if (!fs.existsSync('index.html')) fs.writeFileSync('index.html', '<!-- debug run -->');
-  process.exit(0);
-
-  // Use v2 API — returns all projects; filter by status string
   const out = [];
-  let page = 1;
+  let index = 1;
   while (true) {
-    const res = await httpGet(
-      `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?index=${(page-1)*100+1}&range=100`,
-      { Authorization: `Zoho-oauthtoken ${token}` }
-    ).catch(() => ({}));
+    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?index=${index}&range=100`);
     const batch = res.projects || [];
     out.push(...batch);
+    console.log(`  projects page: got ${batch.length} (total so far: ${out.length})`);
     if (batch.length < 100) break;
-    page++;
+    index += 100;
+  }
+  console.log(`✓ ${out.length} total projects from v2`);
+  return out;
+}
+
+// ── Per-project data ──────────────────────────────────────────────────────────
+async function getProjectData(token, project) {
+  const pid = project.id_string;
+  const openTaskCount = (project.task_count && project.task_count.open) || 0;
+
+  // Always fetch milestones (needed for p2/p3 checks)
+  const msRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/milestones/`);
+
+  // Skip tasks fetch if project has 0 open tasks (saves API calls)
+  let tasks = [];
+  if (openTaskCount > 0) {
+    const tasksRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all`);
+    tasks = tasksRes.tasks || [];
   }
 
-  // Filter by status — check both string and object
-  const keep = out.filter(p => {
-    const s = typeof p.status === 'object'
-      ? (p.status.name || '').toLowerCase()
-      : (p.status || '').toLowerCase();
-    return s === 'active' || s === 'on hold' || s === 'onhold';
-  });
-  console.log(`✓ v2: ${out.length} total → ${keep.length} after status filter`);
-  // Log unique statuses found
-  const statuses = [...new Set(out.map(p => typeof p.status === 'object' ? JSON.stringify(p.status) : p.status))];
-  console.log('Unique statuses in v2:', statuses.join(' | '));
-  return keep;
+  return { tasks, milestones: msRes.milestones || [] };
 }
 
-function zohoGetV3(token, path) {
-  return httpGet(
-    `https://projectsapi.zoho.com/api/v3${path}`,
-    { Authorization: `Zoho-oauthtoken ${token}` }
-  );
-}
-
-async function zohoGetRetry(token, path, useV3) {
-  const fn = useV3 ? zohoGetV3 : zohoGet;
-  while (true) {
-    const res = await fn(token, path).catch(e => ({ _err: e.message }));
-    if (res.error && (res.error.title || '').includes('THROTTLE')) {
-      console.log('Rate limited — waiting 130s...');
-      await new Promise(r => setTimeout(r, 130000));
-      continue;
-    }
-    return res;
-  }
-}
-
-async function getProjectData(token, projectId) {
-  const [tasksRes, msRes] = await Promise.all([
-    zohoGetRetry(token, `/portal/${PORTAL_ID}/projects/${projectId}/tasks/?status=all`, false),
-    zohoGetRetry(token, `/portal/${PORTAL_ID}/projects/${projectId}/milestones/`, false),
-  ]);
-  return {
-    tasks:      tasksRes.tasks      || [],
-    milestones: msRes.milestones    || [],
-  };
-}
-
-// ── Logic helpers ─────────────────────────────────────────────────────────────
+// ── Condition helpers ─────────────────────────────────────────────────────────
 const st = t => (t.status?.name || t.status || '').toLowerCase();
 const ms = m => (m.status || '').toLowerCase();
 
@@ -182,52 +130,44 @@ async function main() {
   const token    = await getAccessToken();
   const projects = await getAllProjects(token);
 
-  const EXCLUDE = new Set(['Walid Mohsen']);
+  // Build owner map
   const ownerMap = Object.fromEntries(projects.map(p => {
-    // v3 returns owner.name, v2 returns owner_name (flat)
     const name = (p.owner && p.owner.name) || p.owner_name || '';
     return [p.id_string, EXCLUDE.has(name) ? '' : name];
   }));
 
-  // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
-
-  // Process in batches of 5 with rate-limit retry
-  const BATCH = 5;
   let processed = 0;
-  for (let i = 0; i < projects.length; i += BATCH) {
-    const slice = projects.slice(i, i + BATCH);
-    const results = await Promise.all(slice.map(p => getProjectData(token, p.id_string)));
 
-    results.forEach((res, j) => {
-      const pid   = slice[j].id_string;
-      const owner = ownerMap[pid];
-      const { tasks, milestones } = res;
+  for (const project of projects) {
+    const pid   = project.id_string;
+    const owner = ownerMap[pid];
 
-      const licDone   = hasTask(tasks,     'صدور الترخيص',                      'finished');
-      const recvOpen  = hasTask(tasks,     'استلام بيانات الترخيص',              'open');
-      const collOpen  = hasTask(tasks,     'جمع بيانات الترخيص',                 'open');
-      const overOpen  = hasTask(tasks,     'موافقة العميل على الاوفر فيو',        'open');
-      const sijilOpen = hasTaskLike(tasks, 'تسليم نسخة من السجل التجارى',        'open');
-      const amerOpen  = hasTaskLike(tasks, 'عمل شركة  امريكا',                   'open'); // مسافتان
+    const { tasks, milestones } = await getProjectData(token, project);
 
-      const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
-      const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
+    const licDone   = hasTask(tasks,     'صدور الترخيص',                   'finished');
+    const recvOpen  = hasTask(tasks,     'استلام بيانات الترخيص',           'open');
+    const collOpen  = hasTask(tasks,     'جمع بيانات الترخيص',              'open');
+    const overOpen  = hasTask(tasks,     'موافقة العميل على الاوفر فيو',    'open');
+    const sijilOpen = hasTaskLike(tasks, 'تسليم نسخة من السجل التجارى',     'open');
+    const amerOpen  = hasTaskLike(tasks, 'عمل شركة  امريكا',                'open'); // مسافتان
 
-      if (licDone && m2 && ms(m2) !== 'completed')                           buckets.p2[pid]   = owner;
-      if (m2 && ms(m2) === 'completed' && m3 && ms(m3) !== 'completed')      buckets.p3[pid]   = owner;
-      if (recvOpen)                                                            buckets.recv[pid] = owner;
-      if (collOpen && recvOpen)                                                buckets.coll[pid] = owner;
-      if (overOpen && !sijilOpen)                                              buckets.over[pid] = owner;
-      if (amerOpen)                                                            buckets.amer[pid] = owner;
-      processed++;
-    });
+    const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
+    const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
 
-    if ((i + BATCH) % 50 === 0) console.log(`  ${Math.min(i + BATCH, projects.length)} / ${projects.length} processed`);
+    if (licDone && m2 && ms(m2) !== 'completed')                        buckets.p2[pid]   = owner;
+    if (m2 && ms(m2) === 'completed' && m3 && ms(m3) !== 'completed')  buckets.p3[pid]   = owner;
+    if (recvOpen)                                                        buckets.recv[pid] = owner;
+    if (collOpen && recvOpen)                                            buckets.coll[pid] = owner;
+    if (overOpen && !sijilOpen)                                          buckets.over[pid] = owner;
+    if (amerOpen)                                                        buckets.amer[pid] = owner;
+
+    processed++;
+    if (processed % 50 === 0) console.log(`  ${processed} / ${projects.length} processed`);
   }
+
   console.log(`✓ ${processed} projects analyzed`);
 
-  // Summarize: total + per AM
   function summarize(bucket) {
     const byManager = {};
     for (const owner of Object.values(bucket)) {
@@ -237,25 +177,28 @@ async function main() {
   }
 
   const data = {
-    p2:        summarize(buckets.p2),
-    p3:        summarize(buckets.p3),
-    recv:      summarize(buckets.recv),
-    coll:      summarize(buckets.coll),
-    over:      summarize(buckets.over),
-    amer:      summarize(buckets.amer),
-    updatedAt: new Date().toLocaleString('ar-EG', { timeZone:'Africa/Cairo', weekday:'long', year:'numeric', month:'long', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+    p2:   summarize(buckets.p2),
+    p3:   summarize(buckets.p3),
+    recv: summarize(buckets.recv),
+    coll: summarize(buckets.coll),
+    over: summarize(buckets.over),
+    amer: summarize(buckets.amer),
+    updatedAt: new Date().toLocaleString('ar-EG', {
+      timeZone:'Africa/Cairo', weekday:'long', year:'numeric',
+      month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
+    }),
   };
 
   console.log('\nFinal metrics:');
   for (const [k, v] of Object.entries(data)) {
-    if (typeof v === 'object' && v.total !== undefined) console.log(`  ${k}: ${v.total}`);
+    if (v && v.total !== undefined) console.log(`  ${k}: ${v.total}`);
   }
 
   fs.writeFileSync('index.html', buildHTML(data));
-  console.log('\n✓ index.html written');
+  console.log('✓ index.html written');
 }
 
-// ── HTML builder ──────────────────────────────────────────────────────────────
+// ── HTML ──────────────────────────────────────────────────────────────────────
 function buildHTML(d) {
   const METRICS = ['p2','p3','recv','coll','over','amer'];
   const BADGE   = { p2:'b-red', p3:'b-red', recv:'b-teal', coll:'b-teal', over:'b-gold', amer:'b-green' };
