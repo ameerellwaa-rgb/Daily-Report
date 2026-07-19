@@ -1,0 +1,23 @@
+{
+  "v3Response": {
+    "keys": [
+      "error"
+    ],
+    "hasError": true,
+    "error": {
+      "status_code": "400",
+      "instance": "/api/v3/portal/896030705/projects/",
+      "title": "URL_RULE_NOT_CONFIGURED",
+      "error_type": "FIELDS_VALIDATION_ERROR",
+      "details": [
+        {
+          "message": "Given URL is wrong"
+        }
+      ]
+    },
+    "dataType": "undefined",
+    "projectsType": "undefined",
+    "rawSample": "{\"error\":{\"status_code\":\"400\",\"instance\":\"/api/v3/portal/896030705/projects/\",\"title\":\"URL_RULE_NOT_CONFIGURED\",\"error_type\":\"FIELDS_VALIDATION_ERROR\",\"details\":[{\"message\":\"Given URL is wrong\"}]}}"
+  },
+  "ts": "2026-07-19T14:13:39.947Z"
+}
