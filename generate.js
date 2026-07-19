@@ -69,8 +69,27 @@ async function getAllProjects(token) {
     const res = await httpGet(
       `https://projectsapi.zoho.com/api/v3/portal/${PORTAL_ID}/projects/?per_page=100&page=${page}`,
       { Authorization: `Zoho-oauthtoken ${token}` }
-    ).catch(() => ({}));
-    const batch = (res.data && res.data.result) || [];
+    ).catch(e => { console.error('v3 fetch error:', e.message); return {}; });
+
+    // Debug: log raw response keys on first page so we can see the structure
+    if (page === 1) {
+      const keys = Object.keys(res);
+      console.log('v3 page1 keys:', keys.join(','));
+      if (res.error) console.log('v3 error:', JSON.stringify(res.error));
+      if (res.data !== undefined) {
+        if (Array.isArray(res.data)) console.log('res.data is array, length:', res.data.length);
+        else console.log('res.data keys:', Object.keys(res.data).join(','));
+      }
+    }
+
+    // Handle multiple possible v3 response formats
+    let batch = [];
+    if (Array.isArray(res.data))                   batch = res.data;
+    else if (res.data && Array.isArray(res.data.result)) batch = res.data.result;
+    else if (Array.isArray(res.projects))           batch = res.projects;
+    else if (res.data && Array.isArray(res.data.projects)) batch = res.data.projects;
+
+    if (page === 1) console.log('batch length from page1:', batch.length);
     out.push(...batch);
     if (batch.length < 100) break;
     page++;
