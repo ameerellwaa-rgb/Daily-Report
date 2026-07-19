@@ -71,12 +71,6 @@ async function getAllProjects(token) {
     if (batch.length < 100) break;
     index += 100;
   }
-  // Debug: show first project structure
-  if (out.length > 0) {
-    const p0 = out[0];
-    console.log('DEBUG first project keys:', Object.keys(p0).join(', '));
-    console.log('DEBUG id:', p0.id, '| id_string:', p0.id_string, '| status:', JSON.stringify(p0.status), '| owner_name:', p0.owner_name);
-  }
   console.log(`✓ ${out.length} total projects`);
   return out;
 }
@@ -116,6 +110,15 @@ async function main() {
 
   // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
+
+  // DEBUG: check first project's tasks
+  const debugProj = projects[0];
+  const debugData = await getProjectData(token, debugProj.id_string);
+  console.log(`DEBUG project[0] id_string=${debugProj.id_string} tasks=${debugData.tasks.length} milestones=${debugData.milestones.length}`);
+  if (debugData.tasks.length > 0) {
+    const t = debugData.tasks[0];
+    console.log(`DEBUG task[0]: name="${t.name}" status=${JSON.stringify(t.status)}`);
+  }
 
   // Process in batches of 10 concurrent requests
   const BATCH = 10;
