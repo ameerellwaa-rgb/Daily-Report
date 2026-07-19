@@ -75,51 +75,35 @@ async function getAllProjects(token) {
   return out;
 }
 
-async function getAllPortalTasks(token) {
-  const out = [];
-  let index = 1;
-  while (true) {
-    const res = await zohoGet(token, `/portal/${PORTAL_ID}/tasks/?index=${index}&range=100&status=all`).catch(() => ({}));
-    const batch = res.tasks || [];
-    out.push(...batch);
-    console.log(`  tasks fetched: ${out.length}`);
-    if (batch.length < 100) break;
-    index += 100;
-  }
-  // Group by project id_string
-  const byProject = {};
-  for (const t of out) {
-    const pid = t.project_id || (t.project && (t.project.id_string || t.project.id));
-    if (pid) {
-      if (!byProject[pid]) byProject[pid] = [];
-      byProject[pid].push(t);
-    }
-  }
-  console.log(`✓ ${out.length} tasks across ${Object.keys(byProject).length} projects`);
-  return byProject;
+function zohoGetV3(token, path) {
+  return httpGet(
+    `https://projectsapi.zoho.com/api/v3${path}`,
+    { Authorization: `Zoho-oauthtoken ${token}` }
+  );
 }
 
-async function getAllPortalMilestones(token) {
-  const out = [];
-  let index = 1;
+async function zohoGetRetry(token, path, useV3) {
+  const fn = useV3 ? zohoGetV3 : zohoGet;
   while (true) {
-    const res = await zohoGet(token, `/portal/${PORTAL_ID}/milestones/?index=${index}&range=100`).catch(() => ({}));
-    const batch = res.milestones || [];
-    out.push(...batch);
-    console.log(`  milestones fetched: ${out.length}`);
-    if (batch.length < 100) break;
-    index += 100;
-  }
-  const byProject = {};
-  for (const m of out) {
-    const pid = m.project_id || (m.project && (m.project.id_string || m.project.id));
-    if (pid) {
-      if (!byProject[pid]) byProject[pid] = [];
-      byProject[pid].push(m);
+    const res = await fn(token, path).catch(e => ({ _err: e.message }));
+    if (res.error && (res.error.title || '').includes('THROTTLE')) {
+      console.log('Rate limited — waiting 130s...');
+      await new Promise(r => setTimeout(r, 130000));
+      continue;
     }
+    return res;
   }
-  console.log(`✓ ${out.length} milestones across ${Object.keys(byProject).length} projects`);
-  return byProject;
+}
+
+async function getProjectData(token, projectId) {
+  const [tasksRes, msRes] = await Promise.all([
+    zohoGetRetry(token, `/portal/${PORTAL_ID}/projects/${projectId}/tasks/?status=all`, false),
+    zohoGetRetry(token, `/portal/${PORTAL_ID}/projects/${projectId}/milestones/`, false),
+  ]);
+  return {
+    tasks:      tasksRes.tasks      || [],
+    milestones: msRes.milestones    || [],
+  };
 }
 
 // ── Logic helpers ─────────────────────────────────────────────────────────────
@@ -147,35 +131,46 @@ async function main() {
   // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
 
-  const [tasksByProject, milestonesByProject] = await Promise.all([
-    getAllPortalTasks(token),
-    getAllPortalMilestones(token),
-  ]);
+  // Filter: only Active + On Hold (check custom_status_name or status)
+  const ACTIVE_STATUSES = new Set(['active', 'on hold', 'onhold']);
+  const toProcess = projects.filter(p => {
+    const cs = (p.custom_status_name || p.status || '').toLowerCase();
+    return ACTIVE_STATUSES.has(cs);
+  });
+  console.log(`✓ ${toProcess.length} active+onhold projects to process (skipping ${projects.length - toProcess.length})`);
 
+  // Process in batches of 5 with rate-limit retry
+  const BATCH = 5;
   let processed = 0;
-  for (const p of projects) {
-    const pid    = p.id_string;
-    const owner  = ownerMap[pid];
-    const tasks      = tasksByProject[pid]      || tasksByProject[p.id] || [];
-    const milestones = milestonesByProject[pid] || milestonesByProject[p.id] || [];
+  for (let i = 0; i < toProcess.length; i += BATCH) {
+    const slice = toProcess.slice(i, i + BATCH);
+    const results = await Promise.all(slice.map(p => getProjectData(token, p.id_string)));
 
-    const licDone   = hasTask(tasks,     'صدور الترخيص',                      'finished');
-    const recvOpen  = hasTask(tasks,     'استلام بيانات الترخيص',              'open');
-    const collOpen  = hasTask(tasks,     'جمع بيانات الترخيص',                 'open');
-    const overOpen  = hasTask(tasks,     'موافقة العميل على الاوفر فيو',        'open');
-    const sijilOpen = hasTaskLike(tasks, 'تسليم نسخة من السجل التجارى',        'open');
-    const amerOpen  = hasTaskLike(tasks, 'عمل شركة  امريكا',                   'open'); // مسافتان
+    results.forEach((res, j) => {
+      const pid   = slice[j].id_string;
+      const owner = ownerMap[pid];
+      const { tasks, milestones } = res;
 
-    const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
-    const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
+      const licDone   = hasTask(tasks,     'صدور الترخيص',                      'finished');
+      const recvOpen  = hasTask(tasks,     'استلام بيانات الترخيص',              'open');
+      const collOpen  = hasTask(tasks,     'جمع بيانات الترخيص',                 'open');
+      const overOpen  = hasTask(tasks,     'موافقة العميل على الاوفر فيو',        'open');
+      const sijilOpen = hasTaskLike(tasks, 'تسليم نسخة من السجل التجارى',        'open');
+      const amerOpen  = hasTaskLike(tasks, 'عمل شركة  امريكا',                   'open'); // مسافتان
 
-    if (licDone && m2 && ms(m2) !== 'completed')                           buckets.p2[pid]   = owner;
-    if (m2 && ms(m2) === 'completed' && m3 && ms(m3) !== 'completed')      buckets.p3[pid]   = owner;
-    if (recvOpen)                                                            buckets.recv[pid] = owner;
-    if (collOpen && recvOpen)                                                buckets.coll[pid] = owner;
-    if (overOpen && !sijilOpen)                                              buckets.over[pid] = owner;
-    if (amerOpen)                                                            buckets.amer[pid] = owner;
-    processed++;
+      const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
+      const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
+
+      if (licDone && m2 && ms(m2) !== 'completed')                           buckets.p2[pid]   = owner;
+      if (m2 && ms(m2) === 'completed' && m3 && ms(m3) !== 'completed')      buckets.p3[pid]   = owner;
+      if (recvOpen)                                                            buckets.recv[pid] = owner;
+      if (collOpen && recvOpen)                                                buckets.coll[pid] = owner;
+      if (overOpen && !sijilOpen)                                              buckets.over[pid] = owner;
+      if (amerOpen)                                                            buckets.amer[pid] = owner;
+      processed++;
+    });
+
+    if ((i + BATCH) % 50 === 0) console.log(`  ${Math.min(i + BATCH, toProcess.length)} / ${toProcess.length} processed`);
   }
   console.log(`✓ ${processed} projects analyzed`);
 
