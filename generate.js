@@ -71,14 +71,14 @@ async function getAllProjects(token) {
     if (batch.length < 100) break;
     index += 100;
   }
-  // Keep only Active and On Hold projects
-  const KEEP = new Set(['active', 'on hold', 'onhold']);
-  const filtered = out.filter(p => {
-    const s = (p.status || '').toLowerCase();
-    return KEEP.has(s);
-  });
-  console.log(`✓ ${out.length} total → ${filtered.length} active+onhold projects`);
-  return filtered;
+  // Debug: show first project structure
+  if (out.length > 0) {
+    const p0 = out[0];
+    console.log('DEBUG first project keys:', Object.keys(p0).join(', '));
+    console.log('DEBUG id:', p0.id, '| id_string:', p0.id_string, '| status:', JSON.stringify(p0.status), '| owner_name:', p0.owner_name);
+  }
+  console.log(`✓ ${out.length} total projects`);
+  return out;
 }
 
 async function getProjectData(token, projectId) {
