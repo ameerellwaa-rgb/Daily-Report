@@ -63,16 +63,25 @@ function zohoGet(token, path) {
 // ── Data fetchers ────────────────────────────────────────────────────────────
 async function getAllProjects(token) {
   const out = [];
-  let index = 1;
+  let page = 1;
   while (true) {
-    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?status=active&index=${index}&range=100`);
-    const batch = res.projects || [];
+    // v3 API returns proper status objects
+    const res = await httpGet(
+      `https://projectsapi.zoho.com/api/v3/portal/${PORTAL_ID}/projects/?per_page=100&page=${page}`,
+      { Authorization: `Zoho-oauthtoken ${token}` }
+    ).catch(() => ({}));
+    const batch = (res.data && res.data.result) || [];
     out.push(...batch);
     if (batch.length < 100) break;
-    index += 100;
+    page++;
   }
-  console.log(`✓ ${out.length} total projects`);
-  return out;
+  // Filter: Active or On Hold only
+  const keep = out.filter(p => {
+    const s = (p.status && p.status.name) || '';
+    return s === 'Active' || s === 'On Hold';
+  });
+  console.log(`✓ ${out.length} total → ${keep.length} active+onhold projects`);
+  return keep;
 }
 
 function zohoGetV3(token, path) {
@@ -124,26 +133,19 @@ async function main() {
 
   const EXCLUDE = new Set(['Walid Mohsen']);
   const ownerMap = Object.fromEntries(projects.map(p => {
-    const name = p.owner_name || (p.owner && p.owner.name) || '';
+    // v3 returns owner.name, v2 returns owner_name (flat)
+    const name = (p.owner && p.owner.name) || p.owner_name || '';
     return [p.id_string, EXCLUDE.has(name) ? '' : name];
   }));
 
   // Result buckets: projectId → ownerName
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
 
-  // Filter: only Active + On Hold (check custom_status_name or status)
-  const ACTIVE_STATUSES = new Set(['active', 'on hold', 'onhold']);
-  const toProcess = projects.filter(p => {
-    const cs = (p.custom_status_name || p.status || '').toLowerCase();
-    return ACTIVE_STATUSES.has(cs);
-  });
-  console.log(`✓ ${toProcess.length} active+onhold projects to process (skipping ${projects.length - toProcess.length})`);
-
   // Process in batches of 5 with rate-limit retry
   const BATCH = 5;
   let processed = 0;
-  for (let i = 0; i < toProcess.length; i += BATCH) {
-    const slice = toProcess.slice(i, i + BATCH);
+  for (let i = 0; i < projects.length; i += BATCH) {
+    const slice = projects.slice(i, i + BATCH);
     const results = await Promise.all(slice.map(p => getProjectData(token, p.id_string)));
 
     results.forEach((res, j) => {
@@ -170,7 +172,7 @@ async function main() {
       processed++;
     });
 
-    if ((i + BATCH) % 50 === 0) console.log(`  ${Math.min(i + BATCH, toProcess.length)} / ${toProcess.length} processed`);
+    if ((i + BATCH) % 50 === 0) console.log(`  ${Math.min(i + BATCH, projects.length)} / ${projects.length} processed`);
   }
   console.log(`✓ ${processed} projects analyzed`);
 
