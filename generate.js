@@ -63,37 +63,40 @@ function zohoGet(token, path) {
 // ── Data fetchers ────────────────────────────────────────────────────────────
 async function debugAPIs(token) {
   const h = { Authorization: `Zoho-oauthtoken ${token}` };
+  const SAMPLE_PROJECT_ID = '2533013000000061778'; // from user's URL
   const tests = [
-    // v2 without status filter
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/`,
-    // v2 with all
-    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=all`,
-    // v3 portals list
-    `https://projectsapi.zoho.com/api/v3/portals/`,
-    // v3 portal singular
-    `https://projectsapi.zoho.com/api/v3/portal/${PORTAL_ID}/projects/`,
-    // v3 portals plural
-    `https://projectsapi.zoho.com/api/v3/portals/${PORTAL_ID}/projects/`,
+    // v2 status variants
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=onhold`,
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=on_hold`,
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=inactive`,
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=archived`,
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/?status=completed`,
+    // single project full object (to see all fields)
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/projects/${SAMPLE_PROJECT_ID}/`,
+    // task search across portal
+    `https://projectsapi.zoho.com/restapi/portal/${PORTAL_ID}/tasks/?text=%D8%A7%D8%B3%D8%AA%D9%84%D8%A7%D9%85`,
   ];
   const results = {};
   for (const url of tests) {
     const res = await httpGet(url, h).catch(e => ({ _fetchError: e.message }));
-    const key = url.replace('https://projectsapi.zoho.com', '');
+    const key = url.replace('https://projectsapi.zoho.com', '').slice(0, 80);
     results[key] = {
       topKeys: Object.keys(res),
       error: res.error || null,
-      raw: JSON.stringify(res).slice(0, 300),
+      raw: JSON.stringify(res).slice(0, 600),
     };
-    // Also capture status values from first batch in v2 call
-    if (url.includes('/restapi/') && !res.error && !res._fetchError) {
+    if (!res.error && !res._fetchError) {
       const projs = res.projects || [];
-      const statuses = [...new Set(projs.map(p => JSON.stringify(p.status || p.project_status || 'N/A')))];
-      results[key].statusSample = statuses;
-      results[key].count = projs.length;
+      if (projs.length > 0) {
+        results[key].count = projs.length;
+        results[key].statusSample = [...new Set(projs.map(p => p.status || p.project_status || 'N/A'))];
+        // full first project to see all fields
+        results[key].firstProjectKeys = Object.keys(projs[0]).join(',');
+      }
     }
   }
   fs.writeFileSync('debug.json', JSON.stringify({ tests: results, ts: new Date().toISOString() }, null, 2));
-  console.log('debug.json written with API test results');
+  console.log('debug.json written');
 }
 
 async function getAllProjects(token) {
