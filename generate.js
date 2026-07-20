@@ -97,21 +97,36 @@ async function getAllProjects(token) {
 }
 
 // ── Per-project data ──────────────────────────────────────────────────────────
+let _milestoneSampleLogged = false;
+let _taskSampleLogged = false;
+const _debugSamples = { milestones: [], tasks: [] };
+
 async function getProjectData(token, project) {
   const pid = project.id_string;
   const openTaskCount = (project.task_count && project.task_count.open) || 0;
 
   // Always fetch milestones (needed for p2/p3 checks)
   const msRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/milestones/`);
+  const milestones = msRes.milestones || [];
+
+  // Capture first few milestone samples for debug.json
+  if (_debugSamples.milestones.length < 5) {
+    const dafaa = milestones.find(m => m.name && m.name.includes('دفعة'));
+    if (dafaa) _debugSamples.milestones.push(dafaa);
+  }
 
   // Skip tasks fetch if project has 0 open tasks (saves API calls)
   let tasks = [];
   if (openTaskCount > 0) {
     const tasksRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all`);
     tasks = tasksRes.tasks || [];
+    // Capture first task sample for debug
+    if (_debugSamples.tasks.length < 3 && tasks.length > 0) {
+      _debugSamples.tasks.push(tasks[0]);
+    }
   }
 
-  return { tasks, milestones: msRes.milestones || [] };
+  return { tasks, milestones };
 }
 
 // ── Condition helpers ─────────────────────────────────────────────────────────
@@ -196,6 +211,14 @@ async function main() {
 
   fs.writeFileSync('index.html', buildHTML(data));
   console.log('✓ index.html written');
+
+  // Write debug sample for inspection
+  fs.writeFileSync('debug.json', JSON.stringify({
+    metrics: { p2: data.p2.total, p3: data.p3.total, recv: data.recv.total, coll: data.coll.total, over: data.over.total, amer: data.amer.total },
+    sampleMilestones: _debugSamples.milestones,
+    sampleTasks: _debugSamples.tasks,
+    ts: new Date().toISOString(),
+  }, null, 2));
 }
 
 // ── HTML ──────────────────────────────────────────────────────────────────────
