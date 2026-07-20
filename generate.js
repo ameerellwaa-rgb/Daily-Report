@@ -154,7 +154,12 @@ async function main() {
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
   let processed = 0;
 
-  for (const project of projects) {
+  // Process only first 30 projects in QUICK_DEBUG mode to inspect data structure
+  const QUICK_DEBUG = true;
+  const projectsToProcess = QUICK_DEBUG ? projects.slice(0, 30) : projects;
+  if (QUICK_DEBUG) console.log('QUICK_DEBUG: processing only first 30 projects');
+
+  for (const project of projectsToProcess) {
     const pid   = project.id_string;
     const owner = ownerMap[pid];
 
