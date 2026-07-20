@@ -185,8 +185,8 @@ async function main() {
     const collOpen      = findTask(tasks,     'جمع بيانات الترخيص',               isOpen);
     const approvalOpen  = findTask(tasks,     'موافقة العميل على الاوفر فيو',     isOpen);
     const amerOpen      = findTaskLike(tasks, 'عمل شركة  امريكا',                 isOpen);  // double space
-    const sijilDone     = findTaskLike(tasks, 'تسليم نسخه من السجل التجارى',      isFinished);
-    const sijilOvr      = findTaskLike(tasks, 'تسليم نسخه من السجل التجارى',      isOverdue);
+    const sijilDone     = findTaskLike(tasks, 'تسليم نسخة من السجل التجارى',      isFinished);
+    const sijilOvr      = findTaskLike(tasks, 'تسليم نسخة من السجل التجارى',      isOverdue);
     const overviewOvr   = findTaskLike(tasks, 'عمل الاوفر فيو',                   isOverdue);
 
     const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
