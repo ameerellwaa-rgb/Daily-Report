@@ -1,7 +1,7 @@
 {
   "metrics": {
     "p2": 50,
-    "p3": 47,
+    "p3": 46,
     "recv": 45,
     "coll": 29,
     "licMonth": 53,
@@ -10,7 +10,7 @@
     "overDue": 1,
     "sijilDelay": 1,
     "sijilAmer": 2,
-    "amer": 12,
+    "amer": 13,
     "completedMonth": 31,
     "completed112": 8
   },
@@ -408,5 +408,5 @@
       }
     }
   ],
-  "ts": "2026-07-20T12:53:13.735Z"
+  "ts": "2026-07-20T13:25:22.520Z"
 }
