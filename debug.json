@@ -1,16 +1,16 @@
 {
   "metrics": {
-    "p2": 50,
-    "p3": 49,
-    "recv": 45,
-    "coll": 29,
-    "licMonth": 54,
-    "sijilSaudi": 110,
-    "clientApproval": 56,
-    "overDue": 1,
-    "sijilDelay": 1,
-    "sijilAmer": 2,
-    "amer": 13,
+    "p2": 5,
+    "p3": 0,
+    "recv": 40,
+    "coll": 26,
+    "licMonth": 5,
+    "sijilSaudi": 8,
+    "clientApproval": 50,
+    "overDue": 0,
+    "sijilDelay": 0,
+    "sijilAmer": 1,
+    "amer": 10,
     "completedMonth": 31,
     "completed112": 8
   },
@@ -408,5 +408,5 @@
       }
     }
   ],
-  "ts": "2026-07-20T11:11:37.861Z"
+  "ts": "2026-07-20T11:43:07.943Z"
 }
