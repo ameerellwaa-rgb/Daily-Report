@@ -151,15 +151,21 @@ async function main() {
     return [p.id_string, EXCLUDE.has(name) ? '' : name];
   }));
 
+  // Filter to Active + On Hold projects only using project_ids.json
+  const activeIds = new Set(JSON.parse(fs.readFileSync('project_ids.json', 'utf8')).active);
+  const activeProjects = projects.filter(p => activeIds.has(p.id_string));
+  console.log(`✓ Filtered to ${activeProjects.length} active/on-hold projects (from ${projects.length} total)`);
+
+  // Log first v2 project status fields (for future optimization)
+  if (projects.length > 0) {
+    const p0 = projects[0];
+    console.log(`  v2 project[0] status fields: status=${JSON.stringify(p0.status)}, is_complete=${p0.is_complete}, project_percent=${p0.project_percent}`);
+  }
+
   const buckets = { p2:{}, p3:{}, recv:{}, coll:{}, over:{}, amer:{} };
   let processed = 0;
 
-  // Process only first 30 projects in QUICK_DEBUG mode to inspect data structure
-  const QUICK_DEBUG = true;
-  const projectsToProcess = QUICK_DEBUG ? projects.slice(0, 30) : projects;
-  if (QUICK_DEBUG) console.log('QUICK_DEBUG: processing only first 30 projects');
-
-  for (const project of projectsToProcess) {
+  for (const project of activeProjects) {
     const pid   = project.id_string;
     const owner = ownerMap[pid];
 
@@ -183,7 +189,7 @@ async function main() {
     if (amerOpen)                                                        buckets.amer[pid] = owner;
 
     processed++;
-    if (processed % 50 === 0) console.log(`  ${processed} / ${projects.length} processed`);
+    if (processed % 50 === 0) console.log(`  ${processed} / ${activeProjects.length} processed`);
   }
 
   console.log(`✓ ${processed} projects analyzed`);
