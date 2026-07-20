@@ -417,10 +417,10 @@ const _D = ${dataForDownload};
 function dlCSV(key, label) {
   const rows = _D[key] || [];
   const bom  = String.fromCharCode(0xFEFF);
-  const hdr  = 'اسم المشروع,المسؤول\n';
+  const hdr  = 'اسم المشروع,المسؤول\\n';
   const body = rows.map(r =>
     '"' + (r.name||'').replace(/"/g,'""') + '","' + (r.owner||'').replace(/"/g,'""') + '"'
-  ).join('\n');
+  ).join('\\n');
   const blob = new Blob([bom + hdr + body], { type: 'text/csv;charset=utf-8;' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
