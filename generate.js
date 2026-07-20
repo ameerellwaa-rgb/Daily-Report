@@ -297,8 +297,20 @@ async function main() {
   }, null, 2));
 }
 
-// ── Push history files to GitHub via API (repo-scope token, no workflow scope needed) ──
+// ── Commit history files (CI: git-stage them; local: GitHub API push) ────────
 async function pushHistoryToGitHub(dateKey, histEntry, histIndex) {
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    // Inside GitHub Actions: just stage the files — the workflow's git commit picks them up
+    try {
+      require('child_process').execSync('git add history/', { stdio: 'inherit' });
+      console.log('  [history] staged history/ — workflow will commit it');
+    } catch (e) {
+      console.error('  [history] git add history/ failed:', e.message);
+    }
+    return;
+  }
+
+  // Outside CI: push via GitHub API for local testing / manual runs
   const token = process.env.GITHUB_TOKEN;
   if (!token) { console.log('  [history push] no GITHUB_TOKEN — skipping'); return; }
 
