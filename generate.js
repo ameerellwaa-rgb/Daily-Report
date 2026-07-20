@@ -104,10 +104,16 @@ async function getProjectData(token, project) {
     if (d) _debugSamples.milestones.push(d);
   }
 
-  // Fetch open and closed tasks separately to avoid ?status=all truncation
-  const openRes   = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=open`);
-  const closedRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=closed`);
-  const tasks = [...(openRes.tasks || []), ...(closedRes.tasks || [])];
+  // Paginate all tasks — ?status=all includes "finished" (a custom type, not "open" or "closed")
+  const tasks = [];
+  let taskIdx = 1;
+  while (true) {
+    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all&index=${taskIdx}&range=100`);
+    const batch = res.tasks || [];
+    tasks.push(...batch);
+    if (batch.length < 100) break;
+    taskIdx += 100;
+  }
 
   if (_debugSamples.tasks.length < 2 && tasks.length > 0) {
     _debugSamples.tasks.push(tasks[0]);
