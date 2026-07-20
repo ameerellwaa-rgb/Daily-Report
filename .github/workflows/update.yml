@@ -2,7 +2,8 @@ name: Update Dashboard
 
 on:
   schedule:
-    - cron: '0 3 * * *'   # كل يوم 6 الصبح توقيت القاهرة (3 UTC)
+    - cron: '30 8 * * *'   # 10:30 صباحاً توقيت القاهرة
+    - cron: '0 14 * * *'   # 4:00 مساءً توقيت القاهرة
   workflow_dispatch:        # زرار تشغيل يدوي من GitHub
 
 permissions:
