@@ -7,8 +7,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#080F1A;--bg-card:#0C1827;--gold:#C9A961;--gold-muted:rgba(201,169,97,.11);--gold-border:rgba(201,169,97,.22);--teal-bright:#0EA898;--teal-muted:rgba(14,168,152,.11);--red:#D94F4F;--red-muted:rgba(217,79,79,.11);--green:#2EAF80;--green-muted:rgba(46,175,128,.11);--text:#DDE5EE;--text-dim:#7A8FA6;--border:rgba(201,169,97,.18)}
+:root{
+  --bg:#080F1A;--bg-card:#0C1827;
+  --gold:#C9A961;--gold-muted:rgba(201,169,97,.11);--gold-border:rgba(201,169,97,.22);
+  --teal:#0EA898;--teal-muted:rgba(14,168,152,.11);
+  --red:#D94F4F;--red-muted:rgba(217,79,79,.11);
+  --green:#2EAF80;--green-muted:rgba(46,175,128,.11);
+  --text:#DDE5EE;--text-dim:#7A8FA6;--border:rgba(201,169,97,.18)
+}
 body{font-family:'Cairo','Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text);direction:rtl;min-height:100vh;padding:16px}
+
+/* Header */
 .header{display:flex;align-items:center;justify-content:space-between;background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:16px 24px;margin-bottom:16px;position:relative;overflow:hidden;flex-wrap:wrap;gap:14px}
 .header::after{content:'';position:absolute;bottom:0;right:0;left:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold) 40%,transparent)}
 .logo-group{display:flex;align-items:center;gap:14px}
@@ -21,43 +30,76 @@ body{font-family:'Cairo','Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg)
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
 .update-time{font-size:11px;color:var(--text-dim);text-align:center}
 .update-time strong{display:block;font-size:13px;color:var(--text);margin-bottom:2px}
-.kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+
+/* KPI Cards */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;margin-bottom:16px}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:16px 18px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:default}
 .kpi-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.38)}
 .kpi-card::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;border-radius:13px 13px 0 0}
-.c-red::before{background:var(--red)}.c-teal::before{background:var(--teal-bright)}.c-gold::before{background:var(--gold)}.c-green::before{background:var(--green)}
-.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
-.kpi-label{font-size:12px;color:var(--text-dim);font-weight:600;line-height:1.4;max-width:110px}
-.kpi-icon{width:36px;height:36px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.c-red::before{background:var(--red)}.c-teal::before{background:var(--teal)}.c-gold::before{background:var(--gold)}.c-green::before{background:var(--green)}
+.kpi-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:8px}
+.kpi-label{font-size:11px;color:var(--text-dim);font-weight:600;line-height:1.5;max-width:100px}
+.kpi-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
 .c-red .kpi-icon{background:var(--red-muted)}.c-teal .kpi-icon{background:var(--teal-muted)}.c-gold .kpi-icon{background:var(--gold-muted)}.c-green .kpi-icon{background:var(--green-muted)}
-.kpi-value{font-size:48px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
-.c-red .kpi-value{color:var(--red)}.c-teal .kpi-value{color:var(--teal-bright)}.c-gold .kpi-value{color:var(--gold)}.c-green .kpi-value{color:var(--green)}
-.kpi-foot{font-size:11px;color:var(--text-dim);margin-top:5px}
+.kpi-value{font-size:44px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums}
+.c-red .kpi-value{color:var(--red)}.c-teal .kpi-value{color:var(--teal)}.c-gold .kpi-value{color:var(--gold)}.c-green .kpi-value{color:var(--green)}
+.kpi-foot{font-size:10px;color:var(--text-dim);margin-top:5px}
+
+/* Section headings */
 .sec-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
 .sec-head h2{font-size:14px;font-weight:700;color:var(--gold);white-space:nowrap}
 .sec-line{flex:1;height:1px;background:var(--border)}
+
+/* Tables */
 .table-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:16px;overflow-x:auto}
-table{width:100%;border-collapse:collapse;min-width:700px}
+table{width:100%;border-collapse:collapse;min-width:500px}
 thead tr{background:rgba(201,169,97,.07);border-bottom:1px solid var(--border)}
-th{padding:12px 13px;font-size:11px;font-weight:700;color:var(--gold);text-align:center;white-space:nowrap;letter-spacing:.03em}
-th:first-child{text-align:right;padding-right:20px}
-td{padding:11px 13px;font-size:14px;text-align:center;border-bottom:1px solid rgba(201,169,97,.07);font-variant-numeric:tabular-nums}
-td:first-child{text-align:right;padding-right:20px;font-weight:700;font-size:15px}
+th{padding:11px 12px;font-size:11px;font-weight:700;color:var(--gold);text-align:center;white-space:nowrap;letter-spacing:.03em}
+th:first-child{text-align:right;padding-right:18px}
+td{padding:10px 12px;font-size:13px;text-align:center;border-bottom:1px solid rgba(201,169,97,.06);font-variant-numeric:tabular-nums}
+td:first-child{text-align:right;padding-right:18px}
 tbody tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:rgba(201,169,97,.04)}
-.total-row{background:rgba(201,169,97,.07)!important;border-top:1px solid var(--gold-border)!important}
-.total-row td{border-bottom:none!important}
-.total-row td:first-child{color:var(--gold);font-size:14px}
-.badge{display:inline-flex;align-items:center;justify-content:center;min-width:32px;padding:3px 10px;border-radius:20px;font-weight:800;font-size:14px}
-.b-red{background:var(--red-muted);color:var(--red)}.b-teal{background:var(--teal-muted);color:var(--teal-bright)}.b-gold{background:var(--gold-muted);color:var(--gold)}.b-green{background:var(--green-muted);color:var(--green)}
-.iframe-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;overflow:hidden;margin-bottom:16px}
-.iframe-bar{padding:12px 18px;border-bottom:1px solid var(--border)}
-.iframe-bar span{font-size:13px;font-weight:700;color:var(--gold)}
-iframe{display:block;width:100%;height:700px;border:none;background:#fff}
+.am-name{font-weight:700;font-size:14px}
+.total-row td{background:rgba(201,169,97,.07)!important;border-top:1px solid var(--gold-border);border-bottom:none!important;font-weight:700;color:var(--gold)}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;justify-content:center;min-width:30px;padding:3px 10px;border-radius:20px;font-weight:800;font-size:13px}
+.b-red{background:var(--red-muted);color:var(--red)}.b-teal{background:var(--teal-muted);color:var(--teal)}.b-gold{background:var(--gold-muted);color:var(--gold)}.b-green{background:var(--green-muted);color:var(--green)}
+
+/* Detail sections */
+.detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:16px}
+.detail-block{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;overflow:hidden}
+.detail-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
+.dl-btn{background:var(--gold-muted);border:1px solid var(--gold-border);color:var(--gold);padding:5px 13px;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
+.dl-btn:hover{background:rgba(201,169,97,.22)}
+.detail-block .table-wrap{border:none;border-radius:0;margin-bottom:0}
+
 footer{text-align:center;color:var(--text-dim);font-size:11px;padding:12px}
-@media(max-width:860px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:520px){.kpi-grid{grid-template-columns:1fr}}
+
+@media(max-width:1100px){.kpi-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:780px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.kpi-grid{grid-template-columns:1fr}}
 </style>
+<script>
+const _D = {"p2":[{"name":"1032-113-1","owner":"بولا"},{"name":"1011-113-1","owner":"بولا"},{"name":"1028-113-1","owner":"بولا"},{"name":"1019-113-1","owner":"يوسف"},{"name":"1018-113-1","owner":"بولا"},{"name":"test amir2","owner":"—"},{"name":"1014-113-1","owner":"بولا"},{"name":"1012-112-1","owner":"بولا"},{"name":"877-113-1","owner":"فاطمة"},{"name":"1006-113-1","owner":"يوسف"},{"name":"1004-116-1","owner":"جنة"},{"name":"1000-113-1","owner":"بولا"},{"name":"TEST amir","owner":"—"},{"name":"33-112-17","owner":"إسراء"},{"name":"991-113-1","owner":"يوسف"},{"name":"988-112-1","owner":"بولا"},{"name":"986-113-1","owner":"يوسف"},{"name":"966-116-1","owner":"جنة"},{"name":"984-113-1","owner":"بولا"},{"name":"983-113-1","owner":"بولا"},{"name":"972-113-1","owner":"جنة"},{"name":"969-113-1","owner":"يوسف"},{"name":"964-113-1","owner":"بولا"},{"name":"963-113-1","owner":"يوسف"},{"name":"957-116-1","owner":"فاطمة"},{"name":"955-116-1","owner":"فاطمة"},{"name":"952-113-1","owner":"بولا"},{"name":"865-112-1","owner":"بولا"},{"name":"667-114-1","owner":"بولا"},{"name":"950-113-1","owner":"بولا"},{"name":"946-1110-1","owner":"فاطمة"},{"name":"715-113-1","owner":"إسراء"},{"name":"944-113-1","owner":"فاطمة"},{"name":"936-113-1","owner":"فاطمة"},{"name":"782-112-2","owner":"فاطمة"},{"name":"920-113-1","owner":"إسراء"},{"name":"913-113-1","owner":"جنة"},{"name":"909-140-1","owner":"فاطمة"},{"name":"907-140-1","owner":"فاطمة"},{"name":"906-112-1","owner":"بولا"},{"name":"904-113-1","owner":"بولا"},{"name":"896-113-1","owner":"جنة"},{"name":"38-116-8","owner":"إسراء"},{"name":"38-116-7","owner":"إسراء"},{"name":"872-113-1","owner":"بولا"},{"name":"853-113-1","owner":"جنة"},{"name":"839-114-1","owner":"إسراء"},{"name":"827-112-1","owner":"فاطمة"},{"name":"641-113-1","owner":"جنة"},{"name":"579-112-1","owner":"جنة"}],"p3":[{"name":"710-113-2","owner":"بولا"},{"name":"1013-113-1","owner":"بولا"},{"name":"1008-116-1","owner":"فاطمة"},{"name":"997-114-1","owner":"يوسف"},{"name":"996-113-1","owner":"بولا"},{"name":"995-114-1","owner":"بولا"},{"name":"987-113-1","owner":"يوسف"},{"name":"981-113-1","owner":"يوسف"},{"name":"980-116-1","owner":"جنة"},{"name":"979-113-1","owner":"يوسف"},{"name":"970-140-1","owner":"يوسف"},{"name":"968-113-1","owner":"يوسف"},{"name":"962-113-1","owner":"يوسف"},{"name":"961-113-1","owner":"بولا"},{"name":"958-113-1","owner":"بولا"},{"name":"954-113-1","owner":"بولا"},{"name":"759-113-1","owner":"بولا"},{"name":"751-114-1","owner":"بولا"},{"name":"693-116-1","owner":"بولا"},{"name":"951-113-1","owner":"فاطمة"},{"name":"949-114-1","owner":"جنة"},{"name":"947-113-1","owner":"بولا"},{"name":"939-113-1","owner":"بولا"},{"name":"937-113-1","owner":"فاطمة"},{"name":"934-114-1","owner":"بولا"},{"name":"932-113-1","owner":"فاطمة"},{"name":"931-113-1","owner":"بولا"},{"name":"714-1215-2","owner":"بولا"},{"name":"930-113-1","owner":"فاطمة"},{"name":"927-113-1","owner":"بولا"},{"name":"924-140-1","owner":"فاطمة"},{"name":"921-113-1","owner":"بولا"},{"name":"919-113-1","owner":"فاطمة"},{"name":"916-114-1","owner":"بولا"},{"name":"912-116-1","owner":"فاطمة"},{"name":"900-112-1","owner":"فاطمة"},{"name":"893-116-1","owner":"فاطمة"},{"name":"332-113-2","owner":"جنة"},{"name":"881-114-1","owner":"بولا"},{"name":"870-113-1","owner":"جنة"},{"name":"706-116-1","owner":"جنة"},{"name":"836-115-1","owner":"فاطمة"},{"name":"860-113-1","owner":"بولا"},{"name":"535-1215-2","owner":"جنة"},{"name":"787-113-1","owner":"جنة"},{"name":"743-113-1","owner":"جنة"},{"name":"733-113-1","owner":"جنة"},{"name":"662-115-1","owner":"جنة"},{"name":"558-113-1","owner":"إسراء"}],"recv":[{"name":"1074-113-1","owner":"فاطمة"},{"name":"1073-113-1","owner":"جنة"},{"name":"999-113-2","owner":"يوسف"},{"name":"1071-113-1","owner":"فاطمة"},{"name":"1070-113-1","owner":"جنة"},{"name":"1069-113-1","owner":"جنة"},{"name":"1067-113-1","owner":"جنة"},{"name":"1066-113-1","owner":"يوسف"},{"name":"1065-116-1","owner":"فاطمة"},{"name":"1064-113-1","owner":"مصطفى"},{"name":"1063-113-1","owner":"مصطفى"},{"name":"1062-113-1","owner":"مصطفى"},{"name":"1060-113-1","owner":"مصطفى"},{"name":"1059-113-1","owner":"جنة"},{"name":"1057-113-1","owner":"بولا"},{"name":"611-114-1","owner":"جنة"},{"name":"1056-113-1","owner":"بولا"},{"name":"1055-113-1","owner":"يوسف"},{"name":"1054-113-1","owner":"بولا"},{"name":"1053-113-1","owner":"بولا"},{"name":"1052-113-1","owner":"بولا"},{"name":"1051-113-1","owner":"يوسف"},{"name":"1050-113-1","owner":"بولا"},{"name":"1049-113-1","owner":"يوسف"},{"name":"1048-113-1","owner":"جنة"},{"name":"557-112-2","owner":"جنة"},{"name":"1046-113-1","owner":"بولا"},{"name":"1045-116-1","owner":"يوسف"},{"name":"1040-113-1","owner":"بولا"},{"name":"1038-113-1","owner":"بولا"},{"name":"1037-113-1","owner":"بولا"},{"name":"1035-113-1","owner":"فاطمة"},{"name":"1033-113-1","owner":"بولا"},{"name":"1029-116-1","owner":"فاطمة"},{"name":"1026-113-1","owner":"يوسف"},{"name":"1025-116-1","owner":"فاطمة"},{"name":"1024-115-1","owner":"جنة"},{"name":"1023-113-1","owner":"جنة"},{"name":"1022-113-1","owner":"بولا"},{"name":"1016-113-1","owner":"إسراء"},{"name":"test amir2","owner":"—"},{"name":"998-113-1","owner":"جنة"},{"name":"33-112-18","owner":"إسراء"},{"name":"976-113-1","owner":"يوسف"},{"name":"875-113-1","owner":"جنة"}],"coll":[{"name":"1074-113-1","owner":"فاطمة"},{"name":"1073-113-1","owner":"جنة"},{"name":"999-113-2","owner":"يوسف"},{"name":"1071-113-1","owner":"فاطمة"},{"name":"1070-113-1","owner":"جنة"},{"name":"1069-113-1","owner":"جنة"},{"name":"1067-113-1","owner":"جنة"},{"name":"1066-113-1","owner":"يوسف"},{"name":"1065-116-1","owner":"فاطمة"},{"name":"1064-113-1","owner":"مصطفى"},{"name":"1063-113-1","owner":"مصطفى"},{"name":"1062-113-1","owner":"مصطفى"},{"name":"1060-113-1","owner":"مصطفى"},{"name":"1059-113-1","owner":"جنة"},{"name":"1057-113-1","owner":"بولا"},{"name":"611-114-1","owner":"جنة"},{"name":"1053-113-1","owner":"بولا"},{"name":"1052-113-1","owner":"بولا"},{"name":"1050-113-1","owner":"بولا"},{"name":"1048-113-1","owner":"جنة"},{"name":"557-112-2","owner":"جنة"},{"name":"1046-113-1","owner":"بولا"},{"name":"1038-113-1","owner":"بولا"},{"name":"1033-113-1","owner":"بولا"},{"name":"1024-115-1","owner":"جنة"},{"name":"1023-113-1","owner":"جنة"},{"name":"test amir2","owner":"—"},{"name":"998-113-1","owner":"جنة"},{"name":"33-112-18","owner":"إسراء"}],"licMonth":[{"name":"1032-113-1","owner":"بولا"},{"name":"1011-113-1","owner":"بولا"},{"name":"1028-113-1","owner":"بولا"},{"name":"1019-113-1","owner":"يوسف"},{"name":"1018-113-1","owner":"بولا"},{"name":"1013-113-1","owner":"بولا"},{"name":"1014-113-1","owner":"بولا"},{"name":"1012-112-1","owner":"بولا"},{"name":"877-113-1","owner":"فاطمة"},{"name":"1008-116-1","owner":"فاطمة"},{"name":"1006-113-1","owner":"يوسف"},{"name":"1004-116-1","owner":"جنة"},{"name":"1000-113-1","owner":"بولا"},{"name":"997-114-1","owner":"يوسف"},{"name":"33-112-17","owner":"إسراء"},{"name":"996-113-1","owner":"بولا"},{"name":"995-114-1","owner":"بولا"},{"name":"991-113-1","owner":"يوسف"},{"name":"988-112-1","owner":"بولا"},{"name":"987-113-1","owner":"يوسف"},{"name":"986-113-1","owner":"يوسف"},{"name":"966-116-1","owner":"جنة"},{"name":"984-113-1","owner":"بولا"},{"name":"983-113-1","owner":"بولا"},{"name":"982-113-1","owner":"يوسف"},{"name":"981-113-1","owner":"يوسف"},{"name":"980-116-1","owner":"جنة"},{"name":"979-113-1","owner":"يوسف"},{"name":"972-113-1","owner":"جنة"},{"name":"970-140-1","owner":"يوسف"},{"name":"969-113-1","owner":"يوسف"},{"name":"968-113-1","owner":"يوسف"},{"name":"964-113-1","owner":"بولا"},{"name":"963-113-1","owner":"يوسف"},{"name":"962-113-1","owner":"يوسف"},{"name":"958-113-1","owner":"بولا"},{"name":"957-116-1","owner":"فاطمة"},{"name":"955-116-1","owner":"فاطمة"},{"name":"954-113-1","owner":"بولا"},{"name":"951-113-1","owner":"فاطمة"},{"name":"950-113-1","owner":"بولا"},{"name":"949-114-1","owner":"جنة"},{"name":"947-113-1","owner":"بولا"},{"name":"946-1110-1","owner":"فاطمة"},{"name":"944-113-1","owner":"فاطمة"},{"name":"939-113-1","owner":"بولا"},{"name":"937-113-1","owner":"فاطمة"},{"name":"936-113-1","owner":"فاطمة"},{"name":"932-113-1","owner":"فاطمة"},{"name":"931-113-1","owner":"بولا"},{"name":"927-113-1","owner":"بولا"},{"name":"924-140-1","owner":"فاطمة"},{"name":"909-140-1","owner":"فاطمة"},{"name":"896-113-1","owner":"جنة"}],"sijilSaudi":[],"clientApproval":[{"name":"1074-113-1","owner":"فاطمة"},{"name":"1073-113-1","owner":"جنة"},{"name":"1072-113-1","owner":"فاطمة"},{"name":"999-113-2","owner":"يوسف"},{"name":"1071-113-1","owner":"فاطمة"},{"name":"1070-113-1","owner":"جنة"},{"name":"1069-113-1","owner":"جنة"},{"name":"1068-141-1","owner":"فاطمة"},{"name":"1067-113-1","owner":"جنة"},{"name":"1066-113-1","owner":"يوسف"},{"name":"1065-116-1","owner":"فاطمة"},{"name":"1064-113-1","owner":"مصطفى"},{"name":"1063-113-1","owner":"مصطفى"},{"name":"1062-113-1","owner":"مصطفى"},{"name":"1060-113-1","owner":"مصطفى"},{"name":"1059-113-1","owner":"جنة"},{"name":"1058-113-1","owner":"يوسف"},{"name":"1057-113-1","owner":"بولا"},{"name":"1047-141-1","owner":"يوسف"},{"name":"611-114-1","owner":"جنة"},{"name":"1056-113-1","owner":"بولا"},{"name":"1055-113-1","owner":"يوسف"},{"name":"1054-113-1","owner":"بولا"},{"name":"1053-113-1","owner":"بولا"},{"name":"1052-113-1","owner":"بولا"},{"name":"1051-113-1","owner":"يوسف"},{"name":"1050-113-1","owner":"بولا"},{"name":"1049-113-1","owner":"يوسف"},{"name":"1048-113-1","owner":"جنة"},{"name":"557-112-2","owner":"جنة"},{"name":"1046-113-1","owner":"بولا"},{"name":"1045-116-1","owner":"يوسف"},{"name":"1043-112-1","owner":"يوسف"},{"name":"1042-140-1","owner":"بولا"},{"name":"1041-116-1","owner":"يوسف"},{"name":"1038-113-1","owner":"بولا"},{"name":"1037-113-1","owner":"بولا"},{"name":"1035-113-1","owner":"فاطمة"},{"name":"903-113-1","owner":"فاطمة"},{"name":"1033-113-1","owner":"بولا"},{"name":"1029-116-1","owner":"فاطمة"},{"name":"1027-116-1","owner":"جنة"},{"name":"1026-113-1","owner":"يوسف"},{"name":"1025-116-1","owner":"فاطمة"},{"name":"1024-115-1","owner":"جنة"},{"name":"1023-113-1","owner":"جنة"},{"name":"1022-113-1","owner":"بولا"},{"name":"1021-115-1","owner":"إسراء"},{"name":"1020-1110-1","owner":"فاطمة"},{"name":"1016-113-1","owner":"إسراء"},{"name":"998-113-1","owner":"جنة"},{"name":"33-112-18","owner":"إسراء"},{"name":"990-116-1","owner":"جنة"},{"name":"978-114-1","owner":"بولا"},{"name":"948-116-1","owner":"بولا"},{"name":"875-113-1","owner":"جنة"}],"overDue":[{"name":"875-113-1","owner":"جنة"}],"sijilDelay":[],"sijilAmer":[],"amer":[{"name":"1065-116-1","owner":"فاطمة"},{"name":"1047-141-1","owner":"يوسف"},{"name":"1045-116-1","owner":"يوسف"},{"name":"1042-140-1","owner":"بولا"},{"name":"1041-116-1","owner":"يوسف"},{"name":"1029-116-1","owner":"فاطمة"},{"name":"1025-116-1","owner":"فاطمة"},{"name":"1024-115-1","owner":"جنة"},{"name":"1021-115-1","owner":"إسراء"},{"name":"1020-1110-1","owner":"فاطمة"},{"name":"990-116-1","owner":"جنة"},{"name":"948-116-1","owner":"بولا"}],"completedMonth":[{"name":"973-113-1","owner":"يوسف"},{"name":"965-113-1","owner":"جنة"},{"name":"960-116-1","owner":"جنة"},{"name":"956-113-1","owner":"إسراء"},{"name":"868-112-1","owner":"بولا"},{"name":"682-112-1","owner":"بولا"},{"name":"945-113-1","owner":"إسراء"},{"name":"933-113-1","owner":"فاطمة"},{"name":"925-113-1","owner":"بولا"},{"name":"923-116-1","owner":"فاطمة"},{"name":"922-113-1","owner":"جنة"},{"name":"917-113-1","owner":"فاطمة"},{"name":"915-113-1","owner":"بولا"},{"name":"910-116-1","owner":"إسراء"},{"name":"905-116-1","owner":"جنة"},{"name":"901-113-1","owner":"جنة"},{"name":"892-113-1","owner":"بولا"},{"name":"29-112-24","owner":"إسراء"},{"name":"890-112-1","owner":"إسراء"},{"name":"33-112-16","owner":"إسراء"},{"name":"509-112-17","owner":"إسراء"},{"name":"509-112-15","owner":"إسراء"},{"name":"885-116-1","owner":"فاطمة"},{"name":"884-112-1","owner":"جنة"},{"name":"876-113-1","owner":"بولا"},{"name":"873-113-1","owner":"فاطمة"},{"name":"852-113-1","owner":"فاطمة"},{"name":"844-116-1","owner":"بولا"},{"name":"843-113-1","owner":"إسراء"},{"name":"814-113-1","owner":"بولا"},{"name":"581-119-1","owner":"إسراء"}],"completed112":[{"name":"868-112-1","owner":"بولا"},{"name":"682-112-1","owner":"بولا"},{"name":"29-112-24","owner":"إسراء"},{"name":"890-112-1","owner":"إسراء"},{"name":"33-112-16","owner":"إسراء"},{"name":"509-112-17","owner":"إسراء"},{"name":"509-112-15","owner":"إسراء"},{"name":"884-112-1","owner":"جنة"}]};
+function dlCSV(key, label) {
+  const rows = _D[key] || [];
+  const bom  = '﻿';
+  const hdr  = 'اسم المشروع,الأكونت مانجر
+';
+  const body = rows.map(r =>
+    '"' + (r.name||'').replace(/"/g,'""') + '","' + (r.owner||'').replace(/"/g,'""') + '"'
+  ).join('
+');
+  const blob = new Blob([bom + hdr + body], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = label + '.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+</script>
 </head>
 <body>
 
@@ -73,66 +115,355 @@ footer{text-align:center;color:var(--text-dim);font-size:11px;padding:12px}
     <div class="live-badge"><span class="pulse-dot"></span>Zoho Projects Live</div>
     <div class="update-time">
       <strong>آخر تحديث</strong>
-      الاثنين، ٢٠ يوليو ٢٠٢٦ في ١٢:٢٣ م
+      الاثنين، ٢٠ يوليو ٢٠٢٦ في ٠١:٥١ م
     </div>
   </div>
 </header>
 
+<!-- KPI Cards -->
 <div class="kpi-grid">
   <div class="kpi-card c-red">
     <div class="kpi-top"><div class="kpi-label">الدفعة الثانية المتأخرة</div><div class="kpi-icon">💰</div></div>
-    <div class="kpi-value">55</div>
+    <div class="kpi-value">50</div>
     <div class="kpi-foot">عميل متأخر في الدفع</div>
   </div>
   <div class="kpi-card c-red">
     <div class="kpi-top"><div class="kpi-label">الدفعة الثالثة المتأخرة</div><div class="kpi-icon">💸</div></div>
-    <div class="kpi-value">63</div>
+    <div class="kpi-value">49</div>
     <div class="kpi-foot">عميل متأخر في الدفع</div>
   </div>
   <div class="kpi-card c-teal">
     <div class="kpi-top"><div class="kpi-label">استلام بيانات الترخيص</div><div class="kpi-icon">📋</div></div>
-    <div class="kpi-value">55</div>
+    <div class="kpi-value">45</div>
     <div class="kpi-foot">مشروع ينتظر البيانات</div>
   </div>
   <div class="kpi-card c-teal">
     <div class="kpi-top"><div class="kpi-label">جمع بيانات الترخيص</div><div class="kpi-icon">📂</div></div>
-    <div class="kpi-value">36</div>
+    <div class="kpi-value">29</div>
     <div class="kpi-foot">مشروع قيد الجمع</div>
   </div>
+
   <div class="kpi-card c-gold">
-    <div class="kpi-top"><div class="kpi-label">فرق تسليم الأوفر فيو</div><div class="kpi-icon">📄</div></div>
-    <div class="kpi-value">8</div>
-    <div class="kpi-foot">مشروع يحتاج متابعة</div>
+    <div class="kpi-top"><div class="kpi-label">صدور الترخيص في الشهر</div><div class="kpi-icon">📜</div></div>
+    <div class="kpi-value">54</div>
+    <div class="kpi-foot">ترخيص صدر هذا الشهر</div>
   </div>
   <div class="kpi-card c-green">
-    <div class="kpi-top"><div class="kpi-label">عمل شركة امريكا</div><div class="kpi-icon">🌐</div></div>
-    <div class="kpi-value">19</div>
+    <div class="kpi-top"><div class="kpi-label">العملاء المنتهون في الشهر</div><div class="kpi-icon">✅</div></div>
+    <div class="kpi-value">31</div>
+    <div class="kpi-foot">عميل أُنجز هذا الشهر</div>
+  </div>
+  <div class="kpi-card c-green">
+    <div class="kpi-top"><div class="kpi-label">المنتهون شغل مصر فقط</div><div class="kpi-icon">🇪🇬</div></div>
+    <div class="kpi-value">8</div>
+    <div class="kpi-foot">عميل مصري منتهي هذا الشهر</div>
+  </div>
+  <div class="kpi-card c-teal">
+    <div class="kpi-top"><div class="kpi-label">تسليم السجل لقسم السعودية</div><div class="kpi-icon">📤</div></div>
+    <div class="kpi-value">0</div>
+    <div class="kpi-foot">سجل سُلِّم لقسم السعودية</div>
+  </div>
+
+  <div class="kpi-card c-gold">
+    <div class="kpi-top"><div class="kpi-label">موافقة العميل على الأوفر فيو</div><div class="kpi-icon">📄</div></div>
+    <div class="kpi-value">56</div>
+    <div class="kpi-foot">ينتظر موافقة العميل</div>
+  </div>
+  <div class="kpi-card c-red">
+    <div class="kpi-top"><div class="kpi-label">التأخير في الأوفر فيو</div><div class="kpi-icon">⏰</div></div>
+    <div class="kpi-value">1</div>
+    <div class="kpi-foot">أوفر فيو متأخر</div>
+  </div>
+  <div class="kpi-card c-red">
+    <div class="kpi-top"><div class="kpi-label">تأخير تسليم السجل التجاري</div><div class="kpi-icon">🗂️</div></div>
+    <div class="kpi-value">0</div>
+    <div class="kpi-foot">سجل تجاري متأخر</div>
+  </div>
+  <div class="kpi-card c-green">
+    <div class="kpi-top"><div class="kpi-label">السجل جاهز وامريكا مفتوحة</div><div class="kpi-icon">🌐</div></div>
+    <div class="kpi-value">0</div>
+    <div class="kpi-foot">تسليم السجل ✓ — امريكا ○</div>
+  </div>
+  <div class="kpi-card c-green" style="grid-column:span 2">
+    <div class="kpi-top"><div class="kpi-label">عمل شركة امريكا</div><div class="kpi-icon">🇺🇸</div></div>
+    <div class="kpi-value">12</div>
     <div class="kpi-foot">مشروع قيد التنفيذ</div>
   </div>
 </div>
 
-<div class="sec-head"><h2>متابعة الأكونت مانجرز</h2><div class="sec-line"></div></div>
+<!-- AM Summary Table -->
+<div class="sec-head"><h2>ملخص الأكونت مانجرز</h2><div class="sec-line"></div></div>
 <div class="table-wrap">
   <table>
     <thead>
       <tr>
         <th>الأكونت مانجر</th>
-        <th>الدفعة الثانية المتأخرة</th>
-        <th>الدفعة الثالثة المتأخرة</th>
-        <th>استلام بيانات الترخيص</th>
-        <th>جمع بيانات الترخيص</th>
-        <th>فرق الأوفر فيو</th>
-        <th>عمل شركة امريكا</th>
+        <th>عملاء نشطين</th>
+        <th>عملاء أون هولد</th>
+        <th>دفعة 2 متأخرة</th>
+        <th>دفعة 3 متأخرة</th>
       </tr>
     </thead>
-    <tbody><tr><td>إسراء</td><td><span class="badge b-red">7</span></td><td><span class="badge b-red">3</span></td><td><span class="badge b-teal">4</span></td><td><span class="badge b-teal">3</span></td><td><span class="badge b-gold">0</span></td><td><span class="badge b-green">2</span></td></tr><tr><td>جنة</td><td><span class="badge b-red">10</span></td><td><span class="badge b-red">12</span></td><td><span class="badge b-teal">12</span></td><td><span class="badge b-teal">11</span></td><td><span class="badge b-gold">3</span></td><td><span class="badge b-green">2</span></td></tr><tr><td>فاطمة</td><td><span class="badge b-red">11</span></td><td><span class="badge b-red">14</span></td><td><span class="badge b-teal">10</span></td><td><span class="badge b-teal">5</span></td><td><span class="badge b-gold">3</span></td><td><span class="badge b-green">8</span></td></tr><tr><td>بولا</td><td><span class="badge b-red">18</span></td><td><span class="badge b-red">20</span></td><td><span class="badge b-teal">13</span></td><td><span class="badge b-teal">8</span></td><td><span class="badge b-gold">1</span></td><td><span class="badge b-green">2</span></td></tr><tr><td>حبيبة</td><td><span class="badge b-red">0</span></td><td><span class="badge b-red">4</span></td><td><span class="badge b-teal">1</span></td><td><span class="badge b-teal">1</span></td><td><span class="badge b-gold">0</span></td><td><span class="badge b-green">0</span></td></tr><tr><td>شروق</td><td><span class="badge b-red">1</span></td><td><span class="badge b-red">3</span></td><td><span class="badge b-teal">1</span></td><td><span class="badge b-teal">1</span></td><td><span class="badge b-gold">1</span></td><td><span class="badge b-green">2</span></td></tr><tr><td>يوسف</td><td><span class="badge b-red">6</span></td><td><span class="badge b-red">7</span></td><td><span class="badge b-teal">9</span></td><td><span class="badge b-teal">2</span></td><td><span class="badge b-gold">0</span></td><td><span class="badge b-green">3</span></td></tr><tr><td>آية</td><td><span class="badge b-red">0</span></td><td><span class="badge b-red">0</span></td><td><span class="badge b-teal">0</span></td><td><span class="badge b-teal">0</span></td><td><span class="badge b-gold">0</span></td><td><span class="badge b-green">0</span></td></tr><tr><td>رويا</td><td><span class="badge b-red">0</span></td><td><span class="badge b-red">0</span></td><td><span class="badge b-teal">0</span></td><td><span class="badge b-teal">0</span></td><td><span class="badge b-gold">0</span></td><td><span class="badge b-green">0</span></td></tr><tr><td>مصطفى</td><td><span class="badge b-red">0</span></td><td><span class="badge b-red">0</span></td><td><span class="badge b-teal">4</span></td><td><span class="badge b-teal">4</span></td><td><span class="badge b-gold">0</span></td><td><span class="badge b-green">0</span></td></tr><tr class="total-row"><td>الإجمالي</td><td><span class="badge b-red">53</span></td><td><span class="badge b-red">63</span></td><td><span class="badge b-teal">54</span></td><td><span class="badge b-teal">35</span></td><td><span class="badge b-gold">8</span></td><td><span class="badge b-green">19</span></td></tr></tbody>
+    <tbody>
+      <tr>
+      <td class="am-name">إسراء</td>
+      <td><span class="badge b-green">14</span></td>
+      <td><span class="badge b-gold">6</span></td>
+      <td><span class="badge b-red">6</span></td>
+      <td><span class="badge b-red">1</span></td>
+    </tr><tr>
+      <td class="am-name">جنة</td>
+      <td><span class="badge b-green">36</span></td>
+      <td><span class="badge b-gold">5</span></td>
+      <td><span class="badge b-red">8</span></td>
+      <td><span class="badge b-red">10</span></td>
+    </tr><tr>
+      <td class="am-name">فاطمة</td>
+      <td><span class="badge b-green">36</span></td>
+      <td><span class="badge b-gold">8</span></td>
+      <td><span class="badge b-red">10</span></td>
+      <td><span class="badge b-red">11</span></td>
+    </tr><tr>
+      <td class="am-name">بولا</td>
+      <td><span class="badge b-green">58</span></td>
+      <td><span class="badge b-gold">2</span></td>
+      <td><span class="badge b-red">18</span></td>
+      <td><span class="badge b-red">20</span></td>
+    </tr><tr>
+      <td class="am-name">يوسف</td>
+      <td><span class="badge b-green">38</span></td>
+      <td><span class="badge b-gold">0</span></td>
+      <td><span class="badge b-red">6</span></td>
+      <td><span class="badge b-red">7</span></td>
+    </tr><tr>
+      <td class="am-name">مصطفى</td>
+      <td><span class="badge b-green">4</span></td>
+      <td><span class="badge b-gold">0</span></td>
+      <td><span class="badge b-red">0</span></td>
+      <td><span class="badge b-red">0</span></td>
+    </tr>
+      <tr class="total-row">
+        <td>الإجمالي</td>
+        <td><span class="badge b-green">186</span></td>
+        <td><span class="badge b-gold">21</span></td>
+        <td><span class="badge b-red">48</span></td>
+        <td><span class="badge b-red">49</span></td>
+      </tr>
+    </tbody>
   </table>
 </div>
 
-<div class="sec-head"><h2>الداشبورد الكامل من Zoho Analytics</h2><div class="sec-line"></div></div>
-<div class="iframe-wrap">
-  <div class="iframe-bar"><span>📊 تقارير Zoho Analytics</span></div>
-  <iframe src="https://analytics.zoho.com/open-view/3307863000000015085" allowfullscreen loading="lazy"></iframe>
+<!-- Detail Tables -->
+<div class="sec-head"><h2>التفاصيل والتصدير</h2><div class="sec-line"></div></div>
+<div class="detail-grid">
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-red" style="font-size:14px;padding:4px 16px;min-width:40px">50</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">الدفعة الثانية المتأخرة</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('p2','الدفعة الثانية المتأخرة')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">1032-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">1011-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">1028-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">1019-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">1018-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">test amir2</td><td>—</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">1014-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">1012-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">9</td><td style="text-align:right">877-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">10</td><td style="text-align:right">1006-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">11</td><td style="text-align:right">1004-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">12</td><td style="text-align:right">1000-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">13</td><td style="text-align:right">TEST amir</td><td>—</td></tr><tr><td style="color:var(--text-dim)">14</td><td style="text-align:right">33-112-17</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">15</td><td style="text-align:right">991-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">16</td><td style="text-align:right">988-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">17</td><td style="text-align:right">986-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">18</td><td style="text-align:right">966-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">19</td><td style="text-align:right">984-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">20</td><td style="text-align:right">983-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">21</td><td style="text-align:right">972-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">22</td><td style="text-align:right">969-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">23</td><td style="text-align:right">964-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">24</td><td style="text-align:right">963-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">25</td><td style="text-align:right">957-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">26</td><td style="text-align:right">955-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">27</td><td style="text-align:right">952-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">28</td><td style="text-align:right">865-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">29</td><td style="text-align:right">667-114-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">30</td><td style="text-align:right">950-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">31</td><td style="text-align:right">946-1110-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">32</td><td style="text-align:right">715-113-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">33</td><td style="text-align:right">944-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">34</td><td style="text-align:right">936-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">35</td><td style="text-align:right">782-112-2</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">36</td><td style="text-align:right">920-113-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">37</td><td style="text-align:right">913-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">38</td><td style="text-align:right">909-140-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">39</td><td style="text-align:right">907-140-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">40</td><td style="text-align:right">906-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">41</td><td style="text-align:right">904-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">42</td><td style="text-align:right">896-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">43</td><td style="text-align:right">38-116-8</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">44</td><td style="text-align:right">38-116-7</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">45</td><td style="text-align:right">872-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">46</td><td style="text-align:right">853-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">47</td><td style="text-align:right">839-114-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">48</td><td style="text-align:right">827-112-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">49</td><td style="text-align:right">641-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">50</td><td style="text-align:right">579-112-1</td><td>جنة</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-red" style="font-size:14px;padding:4px 16px;min-width:40px">49</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">الدفعة الثالثة المتأخرة</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('p3','الدفعة الثالثة المتأخرة')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">710-113-2</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">1013-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">1008-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">997-114-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">996-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">995-114-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">987-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">981-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">9</td><td style="text-align:right">980-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">10</td><td style="text-align:right">979-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">11</td><td style="text-align:right">970-140-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">12</td><td style="text-align:right">968-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">13</td><td style="text-align:right">962-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">14</td><td style="text-align:right">961-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">15</td><td style="text-align:right">958-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">16</td><td style="text-align:right">954-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">17</td><td style="text-align:right">759-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">18</td><td style="text-align:right">751-114-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">19</td><td style="text-align:right">693-116-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">20</td><td style="text-align:right">951-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">21</td><td style="text-align:right">949-114-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">22</td><td style="text-align:right">947-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">23</td><td style="text-align:right">939-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">24</td><td style="text-align:right">937-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">25</td><td style="text-align:right">934-114-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">26</td><td style="text-align:right">932-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">27</td><td style="text-align:right">931-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">28</td><td style="text-align:right">714-1215-2</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">29</td><td style="text-align:right">930-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">30</td><td style="text-align:right">927-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">31</td><td style="text-align:right">924-140-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">32</td><td style="text-align:right">921-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">33</td><td style="text-align:right">919-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">34</td><td style="text-align:right">916-114-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">35</td><td style="text-align:right">912-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">36</td><td style="text-align:right">900-112-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">37</td><td style="text-align:right">893-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">38</td><td style="text-align:right">332-113-2</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">39</td><td style="text-align:right">881-114-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">40</td><td style="text-align:right">870-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">41</td><td style="text-align:right">706-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">42</td><td style="text-align:right">836-115-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">43</td><td style="text-align:right">860-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">44</td><td style="text-align:right">535-1215-2</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">45</td><td style="text-align:right">787-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">46</td><td style="text-align:right">743-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">47</td><td style="text-align:right">733-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">48</td><td style="text-align:right">662-115-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">49</td><td style="text-align:right">558-113-1</td><td>إسراء</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-teal" style="font-size:14px;padding:4px 16px;min-width:40px">45</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">استلام بيانات الترخيص</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('recv','استلام بيانات الترخيص')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">1074-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">1073-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">999-113-2</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">1071-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">1070-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">1069-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">1067-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">1066-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">9</td><td style="text-align:right">1065-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">10</td><td style="text-align:right">1064-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">11</td><td style="text-align:right">1063-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">12</td><td style="text-align:right">1062-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">13</td><td style="text-align:right">1060-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">14</td><td style="text-align:right">1059-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">15</td><td style="text-align:right">1057-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">16</td><td style="text-align:right">611-114-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">17</td><td style="text-align:right">1056-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">18</td><td style="text-align:right">1055-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">19</td><td style="text-align:right">1054-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">20</td><td style="text-align:right">1053-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">21</td><td style="text-align:right">1052-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">22</td><td style="text-align:right">1051-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">23</td><td style="text-align:right">1050-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">24</td><td style="text-align:right">1049-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">25</td><td style="text-align:right">1048-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">26</td><td style="text-align:right">557-112-2</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">27</td><td style="text-align:right">1046-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">28</td><td style="text-align:right">1045-116-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">29</td><td style="text-align:right">1040-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">30</td><td style="text-align:right">1038-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">31</td><td style="text-align:right">1037-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">32</td><td style="text-align:right">1035-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">33</td><td style="text-align:right">1033-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">34</td><td style="text-align:right">1029-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">35</td><td style="text-align:right">1026-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">36</td><td style="text-align:right">1025-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">37</td><td style="text-align:right">1024-115-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">38</td><td style="text-align:right">1023-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">39</td><td style="text-align:right">1022-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">40</td><td style="text-align:right">1016-113-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">41</td><td style="text-align:right">test amir2</td><td>—</td></tr><tr><td style="color:var(--text-dim)">42</td><td style="text-align:right">998-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">43</td><td style="text-align:right">33-112-18</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">44</td><td style="text-align:right">976-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">45</td><td style="text-align:right">875-113-1</td><td>جنة</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-teal" style="font-size:14px;padding:4px 16px;min-width:40px">29</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">جمع بيانات الترخيص</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('coll','جمع بيانات الترخيص')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">1074-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">1073-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">999-113-2</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">1071-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">1070-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">1069-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">1067-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">1066-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">9</td><td style="text-align:right">1065-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">10</td><td style="text-align:right">1064-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">11</td><td style="text-align:right">1063-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">12</td><td style="text-align:right">1062-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">13</td><td style="text-align:right">1060-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">14</td><td style="text-align:right">1059-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">15</td><td style="text-align:right">1057-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">16</td><td style="text-align:right">611-114-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">17</td><td style="text-align:right">1053-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">18</td><td style="text-align:right">1052-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">19</td><td style="text-align:right">1050-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">20</td><td style="text-align:right">1048-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">21</td><td style="text-align:right">557-112-2</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">22</td><td style="text-align:right">1046-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">23</td><td style="text-align:right">1038-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">24</td><td style="text-align:right">1033-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">25</td><td style="text-align:right">1024-115-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">26</td><td style="text-align:right">1023-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">27</td><td style="text-align:right">test amir2</td><td>—</td></tr><tr><td style="color:var(--text-dim)">28</td><td style="text-align:right">998-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">29</td><td style="text-align:right">33-112-18</td><td>إسراء</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-gold" style="font-size:14px;padding:4px 16px;min-width:40px">54</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">صدور الترخيص في الشهر</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('licMonth','صدور الترخيص في الشهر')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">1032-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">1011-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">1028-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">1019-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">1018-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">1013-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">1014-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">1012-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">9</td><td style="text-align:right">877-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">10</td><td style="text-align:right">1008-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">11</td><td style="text-align:right">1006-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">12</td><td style="text-align:right">1004-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">13</td><td style="text-align:right">1000-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">14</td><td style="text-align:right">997-114-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">15</td><td style="text-align:right">33-112-17</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">16</td><td style="text-align:right">996-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">17</td><td style="text-align:right">995-114-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">18</td><td style="text-align:right">991-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">19</td><td style="text-align:right">988-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">20</td><td style="text-align:right">987-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">21</td><td style="text-align:right">986-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">22</td><td style="text-align:right">966-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">23</td><td style="text-align:right">984-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">24</td><td style="text-align:right">983-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">25</td><td style="text-align:right">982-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">26</td><td style="text-align:right">981-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">27</td><td style="text-align:right">980-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">28</td><td style="text-align:right">979-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">29</td><td style="text-align:right">972-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">30</td><td style="text-align:right">970-140-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">31</td><td style="text-align:right">969-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">32</td><td style="text-align:right">968-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">33</td><td style="text-align:right">964-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">34</td><td style="text-align:right">963-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">35</td><td style="text-align:right">962-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">36</td><td style="text-align:right">958-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">37</td><td style="text-align:right">957-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">38</td><td style="text-align:right">955-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">39</td><td style="text-align:right">954-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">40</td><td style="text-align:right">951-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">41</td><td style="text-align:right">950-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">42</td><td style="text-align:right">949-114-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">43</td><td style="text-align:right">947-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">44</td><td style="text-align:right">946-1110-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">45</td><td style="text-align:right">944-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">46</td><td style="text-align:right">939-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">47</td><td style="text-align:right">937-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">48</td><td style="text-align:right">936-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">49</td><td style="text-align:right">932-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">50</td><td style="text-align:right">931-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">51</td><td style="text-align:right">927-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">52</td><td style="text-align:right">924-140-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">53</td><td style="text-align:right">909-140-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">54</td><td style="text-align:right">896-113-1</td><td>جنة</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-green" style="font-size:14px;padding:4px 16px;min-width:40px">31</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">العملاء المنتهون في الشهر</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('completedMonth','العملاء المنتهون في الشهر')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">973-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">965-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">960-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">956-113-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">868-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">682-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">945-113-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">933-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">9</td><td style="text-align:right">925-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">10</td><td style="text-align:right">923-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">11</td><td style="text-align:right">922-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">12</td><td style="text-align:right">917-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">13</td><td style="text-align:right">915-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">14</td><td style="text-align:right">910-116-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">15</td><td style="text-align:right">905-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">16</td><td style="text-align:right">901-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">17</td><td style="text-align:right">892-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">18</td><td style="text-align:right">29-112-24</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">19</td><td style="text-align:right">890-112-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">20</td><td style="text-align:right">33-112-16</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">21</td><td style="text-align:right">509-112-17</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">22</td><td style="text-align:right">509-112-15</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">23</td><td style="text-align:right">885-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">24</td><td style="text-align:right">884-112-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">25</td><td style="text-align:right">876-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">26</td><td style="text-align:right">873-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">27</td><td style="text-align:right">852-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">28</td><td style="text-align:right">844-116-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">29</td><td style="text-align:right">843-113-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">30</td><td style="text-align:right">814-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">31</td><td style="text-align:right">581-119-1</td><td>إسراء</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-green" style="font-size:14px;padding:4px 16px;min-width:40px">8</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">العملاء المنتهون شغل مصر فقط</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('completed112','العملاء المنتهون شغل مصر فقط')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">868-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">682-112-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">29-112-24</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">890-112-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">33-112-16</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">509-112-17</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">509-112-15</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">884-112-1</td><td>جنة</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-teal" style="font-size:14px;padding:4px 16px;min-width:40px">0</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">تسليم السجل التجاري لقسم السعودية</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('sijilSaudi','تسليم السجل التجاري لقسم السعودية')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px 0">لا توجد بيانات</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-gold" style="font-size:14px;padding:4px 16px;min-width:40px">56</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">موافقة العميل على الأوفر فيو</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('clientApproval','موافقة العميل على الأوفر فيو')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">1074-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">1073-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">1072-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">999-113-2</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">1071-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">1070-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">1069-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">1068-141-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">9</td><td style="text-align:right">1067-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">10</td><td style="text-align:right">1066-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">11</td><td style="text-align:right">1065-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">12</td><td style="text-align:right">1064-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">13</td><td style="text-align:right">1063-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">14</td><td style="text-align:right">1062-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">15</td><td style="text-align:right">1060-113-1</td><td>مصطفى</td></tr><tr><td style="color:var(--text-dim)">16</td><td style="text-align:right">1059-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">17</td><td style="text-align:right">1058-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">18</td><td style="text-align:right">1057-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">19</td><td style="text-align:right">1047-141-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">20</td><td style="text-align:right">611-114-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">21</td><td style="text-align:right">1056-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">22</td><td style="text-align:right">1055-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">23</td><td style="text-align:right">1054-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">24</td><td style="text-align:right">1053-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">25</td><td style="text-align:right">1052-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">26</td><td style="text-align:right">1051-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">27</td><td style="text-align:right">1050-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">28</td><td style="text-align:right">1049-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">29</td><td style="text-align:right">1048-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">30</td><td style="text-align:right">557-112-2</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">31</td><td style="text-align:right">1046-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">32</td><td style="text-align:right">1045-116-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">33</td><td style="text-align:right">1043-112-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">34</td><td style="text-align:right">1042-140-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">35</td><td style="text-align:right">1041-116-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">36</td><td style="text-align:right">1038-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">37</td><td style="text-align:right">1037-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">38</td><td style="text-align:right">1035-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">39</td><td style="text-align:right">903-113-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">40</td><td style="text-align:right">1033-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">41</td><td style="text-align:right">1029-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">42</td><td style="text-align:right">1027-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">43</td><td style="text-align:right">1026-113-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">44</td><td style="text-align:right">1025-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">45</td><td style="text-align:right">1024-115-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">46</td><td style="text-align:right">1023-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">47</td><td style="text-align:right">1022-113-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">48</td><td style="text-align:right">1021-115-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">49</td><td style="text-align:right">1020-1110-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">50</td><td style="text-align:right">1016-113-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">51</td><td style="text-align:right">998-113-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">52</td><td style="text-align:right">33-112-18</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">53</td><td style="text-align:right">990-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">54</td><td style="text-align:right">978-114-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">55</td><td style="text-align:right">948-116-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">56</td><td style="text-align:right">875-113-1</td><td>جنة</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-red" style="font-size:14px;padding:4px 16px;min-width:40px">1</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">التأخير في الأوفر فيو</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('overDue','التأخير في الأوفر فيو')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">875-113-1</td><td>جنة</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-red" style="font-size:14px;padding:4px 16px;min-width:40px">0</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">تأخير تسليم السجل التجاري</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('sijilDelay','تأخير تسليم السجل التجاري')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px 0">لا توجد بيانات</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-green" style="font-size:14px;padding:4px 16px;min-width:40px">0</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">الفرق بين تسليم السجل التجاري وعمل شركة امريكا</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('sijilAmer','الفرق بين تسليم السجل التجاري وعمل شركة امريكا')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px 0">لا توجد بيانات</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="detail-block">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="badge b-green" style="font-size:14px;padding:4px 16px;min-width:40px">12</span>
+      <h3 style="font-size:14px;font-weight:700;color:var(--text)">عمل شركة امريكا</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSV('amer','عمل شركة امريكا')">⬇ Excel</button>
+  </div>
+  <div class="table-wrap" style="margin-bottom:0">
+    <table>
+      <thead><tr><th style="width:40px">#</th><th style="text-align:right">اسم المشروع</th><th>الأكونت مانجر</th></tr></thead>
+      <tbody><tr><td style="color:var(--text-dim)">1</td><td style="text-align:right">1065-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">2</td><td style="text-align:right">1047-141-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">3</td><td style="text-align:right">1045-116-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">4</td><td style="text-align:right">1042-140-1</td><td>بولا</td></tr><tr><td style="color:var(--text-dim)">5</td><td style="text-align:right">1041-116-1</td><td>يوسف</td></tr><tr><td style="color:var(--text-dim)">6</td><td style="text-align:right">1029-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">7</td><td style="text-align:right">1025-116-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">8</td><td style="text-align:right">1024-115-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">9</td><td style="text-align:right">1021-115-1</td><td>إسراء</td></tr><tr><td style="color:var(--text-dim)">10</td><td style="text-align:right">1020-1110-1</td><td>فاطمة</td></tr><tr><td style="color:var(--text-dim)">11</td><td style="text-align:right">990-116-1</td><td>جنة</td></tr><tr><td style="color:var(--text-dim)">12</td><td style="text-align:right">948-116-1</td><td>بولا</td></tr></tbody>
+    </table>
+  </div>
+</div>
 </div>
 
 <footer>EL LWAA LAW FIRM © 2025 | جميع الحقوق محفوظة</footer>
