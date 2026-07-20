@@ -530,6 +530,18 @@ footer{text-align:center;color:var(--text-dim);font-size:11px;padding:12px}
 .tag-live{background:var(--green-muted);color:var(--green)}.tag-past{background:var(--gold-muted);color:var(--gold)}
 @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:1fr}}
 @media(max-width:500px){.kpi-grid{grid-template-columns:1fr}}
+.quality-btn{background:var(--teal-muted);border:1px solid rgba(14,168,152,.35);color:var(--teal);padding:7px 14px;border-radius:8px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:background .2s;white-space:nowrap}
+.quality-btn:hover{background:rgba(14,168,152,.2)}
+.pw-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center}
+.pw-overlay.open{display:flex}
+.pw-box{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:32px;width:320px;text-align:center}
+.pw-box h3{color:var(--teal);font-size:15px;font-weight:900;margin-bottom:6px}
+.pw-box p{color:var(--text-dim);font-size:11px;margin-bottom:20px}
+.pw-input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:11px 14px;font-family:inherit;font-size:15px;text-align:center;letter-spacing:6px;margin-bottom:12px}
+.pw-input:focus{border-color:var(--teal);outline:none}
+.pw-err{color:var(--red);font-size:11px;margin-bottom:10px;min-height:16px}
+.pw-ok{background:var(--teal);color:#000;border:none;padding:11px 28px;border-radius:8px;font-family:inherit;font-size:13px;font-weight:900;cursor:pointer;width:100%;margin-bottom:8px}
+.pw-cancel{background:none;border:none;color:var(--text-dim);font-family:inherit;font-size:12px;cursor:pointer}
 </style>
 <script>
 const _D   = ${dataForDownload};
@@ -672,6 +684,27 @@ async function loadHistPos(pos) {
 function histNav(dir) { loadHistPos(Math.max(-1, Math.min(_histIndex.length - 1, _histPos + dir))); }
 function histSelect(v) { loadHistPos(parseInt(v)); }
 
+// ── Quality section ───────────────────────────────────────────────────────────
+function checkPW() {
+  const pw = document.getElementById('pw-input').value;
+  if (pw === 'amir1230') {
+    sessionStorage.setItem('qa_auth', 'ok');
+    window.open('quality.html', '_blank');
+    closePW();
+  } else {
+    const err = document.getElementById('pw-err');
+    err.textContent = 'كلمة المرور غلط ❌';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+    setTimeout(() => { err.textContent = ''; }, 2500);
+  }
+}
+function closePW() {
+  document.getElementById('pw-overlay').classList.remove('open');
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-err').textContent = '';
+}
+
 window.addEventListener('DOMContentLoaded', initHistory);
 </script>
 </head>
@@ -687,9 +720,21 @@ window.addEventListener('DOMContentLoaded', initHistory);
   </div>
   <div class="header-meta">
     <div class="live-badge"><span class="pulse-dot"></span>Zoho Projects Live</div>
+    <button class="quality-btn" onclick="document.getElementById('pw-overlay').classList.add('open');document.getElementById('pw-input').focus()">🎯 قسم Quality</button>
     <div class="update-time"><strong>آخر تحديث</strong><span id="upd-at">${d.updatedAt}</span></div>
   </div>
 </header>
+
+<div class="pw-overlay" id="pw-overlay" onclick="if(event.target===this)closePW()">
+  <div class="pw-box">
+    <h3>🎯 قسم الجودة والمتابعة</h3>
+    <p>أدخل كلمة المرور للدخول</p>
+    <input type="password" class="pw-input" id="pw-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPW()">
+    <div class="pw-err" id="pw-err"></div>
+    <button class="pw-ok" onclick="checkPW()">دخول</button>
+    <button class="pw-cancel" onclick="closePW()">إلغاء</button>
+  </div>
+</div>
 
 <div class="hist-bar">
   <button class="hist-btn" id="hist-prev" onclick="histNav(1)" title="يوم سابق">◀</button>
