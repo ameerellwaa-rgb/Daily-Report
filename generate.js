@@ -91,10 +91,10 @@ async function getAllProjects(token) {
 // ── Per-project data ──────────────────────────────────────────────────────────
 const _debugSamples = { milestones: [], tasks: [] };
 
+let _diagLicCount = 0;
+
 async function getProjectData(token, project) {
   const pid = project.id_string;
-  const tc  = project.task_count || {};
-  const hasTasks = (tc.open || 0) + (tc.closed || 0) > 0;
 
   const msRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/milestones/`);
   const milestones = msRes.milestones || [];
@@ -104,13 +104,19 @@ async function getProjectData(token, project) {
     if (d) _debugSamples.milestones.push(d);
   }
 
-  let tasks = [];
-  if (hasTasks) {
-    const tasksRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all`);
-    tasks = tasksRes.tasks || [];
-    if (_debugSamples.tasks.length < 2 && tasks.length > 0) {
-      _debugSamples.tasks.push(tasks[0]);
-    }
+  // Fetch open and closed tasks separately to avoid ?status=all truncation
+  const openRes   = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=open`);
+  const closedRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=closed`);
+  const tasks = [...(openRes.tasks || []), ...(closedRes.tasks || [])];
+
+  if (_debugSamples.tasks.length < 2 && tasks.length > 0) {
+    _debugSamples.tasks.push(tasks[0]);
+  }
+  // Debug: log first few صدور الترخيص findings
+  const licTask = tasks.find(t => t.name === 'صدور الترخيص');
+  if (licTask && _diagLicCount < 5) {
+    _diagLicCount++;
+    console.log(`  [diag] pid=${pid} licTask status="${licTask.status?.name}" type="${licTask.status?.type}"`);
   }
 
   return { tasks, milestones };
@@ -269,7 +275,8 @@ function buildHTML(d) {
        'overDue','sijilDelay','sijilAmer','amer','completedMonth','completed112','onHold']
       .map(k => [k, d[k].details])
     )
-  ).replace(/<\/script>/gi, '<\\/script>');
+  ).replace(/<\/script>/gi, '<\\/script>')
+   .replace(/[^\x00-\x7F]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
 
   // AM summary table rows
   const amRows = AM_ORDER.map(amEn => {
