@@ -1,11 +1,11 @@
 {
   "metrics": {
-    "p2": 0,
+    "p2": 55,
     "p3": 63,
-    "recv": 0,
-    "coll": 0,
-    "over": 0,
-    "amer": 0
+    "recv": 55,
+    "coll": 36,
+    "over": 8,
+    "amer": 19
   },
   "sampleMilestones": [
     {
@@ -229,6 +229,376 @@
       "status": "notcompleted"
     }
   ],
-  "sampleTasks": [],
-  "ts": "2026-07-20T09:02:02.306Z"
+  "sampleTasks": [
+    {
+      "start_date_long": 1784534400000,
+      "is_comment_added": false,
+      "end_date_format": "07-20-2026 09:00:00 AM",
+      "added_via": "web",
+      "last_updated_time_long": 1784482756193,
+      "is_forum_associated": false,
+      "details": {
+        "owners": [
+          {
+            "zpuid": "2533013000000816007",
+            "full_name": "fatema ellwaa",
+            "work": "00:00",
+            "name": "fatema",
+            "last_name": "ellwaa",
+            "id": "905858093",
+            "first_name": "fatema",
+            "email": "fatemaellwaa@gmail.com"
+          }
+        ]
+      },
+      "id": 2533013000003724000,
+      "created_time": "07-19-2026",
+      "dependency": {
+        "dependencyDetails": {
+          "2533013000003723822": {
+            "PROJECTID": "2533013000003732903",
+            "DEPENDENCY_TYPE": "FS",
+            "IS_COMPLETED": false,
+            "PROJECTNAME": "1074-113-1",
+            "KEY": "10AY-T3",
+            "NAME": "عمل جروب واتس اب للعميل"
+          },
+          "2533013000003723820": {
+            "PROJECTID": "2533013000003732903",
+            "DEPENDENCY_TYPE": "SS",
+            "IS_COMPLETED": false,
+            "PROJECTNAME": "1074-113-1",
+            "KEY": "10AY-T1",
+            "NAME": "دفعة بدون فاتورة"
+          }
+        },
+        "successor": [
+          "2533013000003723822"
+        ],
+        "predecessor": [
+          "2533013000003723820"
+        ]
+      },
+      "work": "00:00",
+      "start_date_format": "07-20-2026 09:00:00 AM",
+      "isparent": false,
+      "work_type": "work_hours",
+      "completed": false,
+      "task_followers": {
+        "FOLUSERS": "",
+        "FOLLOWERSIZE": -1,
+        "FOLLOWERS": []
+      },
+      "priority": "None",
+      "task_duration_as_work": false,
+      "created_by": "887911019",
+      "last_updated_time": "07-19-2026",
+      "name": "تحويل بنكى سعودى 15 % فاتورة قيمة مضافة (تكلفة اضافية)",
+      "is_docs_assocoated": false,
+      "tasklist": {
+        "name": "دفع الدفعة الاولى",
+        "id_string": "2533013000003723811",
+        "id": "2533013000003723811"
+      },
+      "last_updated_time_format": "07-19-2026 06:39:16 PM",
+      "billingtype": "None",
+      "order_sequence": 4,
+      "status": {
+        "name": "Open",
+        "id": "2533013000000016068",
+        "type": "open",
+        "color_code": "#398EF3"
+      },
+      "end_date": "07-20-2026",
+      "milestone_id": "2533013000003723808",
+      "link": {
+        "timesheet": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003732903/tasks/2533013000003723821/logs/"
+        },
+        "web": {
+          "url": "https://projects.zoho.com/portal/ellwaadotonline#zp/task-detail/2533013000003723821"
+        },
+        "self": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003732903/tasks/2533013000003723821/"
+        }
+      },
+      "description": "",
+      "created_by_zpuid": "2533013000000059003",
+      "work_form": "standard_work",
+      "end_date_long": 1784534400000,
+      "duration": "0",
+      "created_by_email": "ellwaa@ellwaa.org",
+      "key": "10AY-T2",
+      "start_date": "07-20-2026",
+      "created_person": "Walid Mohsen",
+      "created_time_long": 1784482732492,
+      "is_reminder_set": false,
+      "is_recurrence_set": false,
+      "created_time_format": "07-19-2026 06:38:52 PM",
+      "created_by_full_name": "Walid Mohsen",
+      "subtasks": false,
+      "duration_type": "days",
+      "percent_complete": "0",
+      "GROUP_NAME": {
+        "ASSOCIATED_TEAMS": {
+          "AnyTeam": "Not Associated"
+        },
+        "ASSOCIATED_TEAMS_COUNT": 0,
+        "IS_TEAM_UNASSIGNED": true
+      },
+      "id_string": "2533013000003723821",
+      "log_hours": {
+        "non_billable_hours": "0.0",
+        "billable_hours": "0.0"
+      }
+    },
+    {
+      "start_date_long": 1784534400000,
+      "is_comment_added": false,
+      "end_date_format": "07-20-2026 09:00:00 AM",
+      "added_via": "web",
+      "last_updated_time_long": 1784466700011,
+      "is_forum_associated": false,
+      "details": {
+        "owners": [
+          {
+            "zpuid": "2533013000000129225",
+            "full_name": "Jenna Ellwaa",
+            "work": "00:00",
+            "name": "Jenna",
+            "last_name": "Ellwaa",
+            "id": "898471283",
+            "first_name": "Jenna",
+            "email": "jennaellwaa@gmail.com"
+          }
+        ]
+      },
+      "id": 2533013000003725300,
+      "created_time": "07-19-2026",
+      "dependency": {
+        "dependencyDetails": {
+          "2533013000003725227": {
+            "PROJECTID": "2533013000003732819",
+            "DEPENDENCY_TYPE": "FS",
+            "IS_COMPLETED": false,
+            "PROJECTNAME": "1073-113-1",
+            "KEY": "10C0-T3",
+            "NAME": "عمل جروب واتس اب للعميل"
+          },
+          "2533013000003725225": {
+            "PROJECTID": "2533013000003732819",
+            "DEPENDENCY_TYPE": "SS",
+            "IS_COMPLETED": false,
+            "PROJECTNAME": "1073-113-1",
+            "KEY": "10C0-T1",
+            "NAME": "دفعة بدون فاتورة"
+          }
+        },
+        "successor": [
+          "2533013000003725227"
+        ],
+        "predecessor": [
+          "2533013000003725225"
+        ]
+      },
+      "work": "00:00",
+      "start_date_format": "07-20-2026 09:00:00 AM",
+      "isparent": false,
+      "work_type": "work_hours",
+      "completed": false,
+      "task_followers": {
+        "FOLUSERS": "",
+        "FOLLOWERSIZE": -1,
+        "FOLLOWERS": []
+      },
+      "priority": "None",
+      "task_duration_as_work": false,
+      "created_by": "887911019",
+      "last_updated_time": "07-19-2026",
+      "name": "تحويل بنكى سعودى 15 % فاتورة قيمة مضافة (تكلفة اضافية)",
+      "is_docs_assocoated": false,
+      "tasklist": {
+        "name": "دفع الدفعة الاولى",
+        "id_string": "2533013000003725216",
+        "id": "2533013000003725216"
+      },
+      "last_updated_time_format": "07-19-2026 02:11:40 PM",
+      "billingtype": "None",
+      "order_sequence": 4,
+      "status": {
+        "name": "Open",
+        "id": "2533013000000016068",
+        "type": "open",
+        "color_code": "#398EF3"
+      },
+      "end_date": "07-20-2026",
+      "milestone_id": "2533013000003725213",
+      "link": {
+        "timesheet": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003732819/tasks/2533013000003725226/logs/"
+        },
+        "web": {
+          "url": "https://projects.zoho.com/portal/ellwaadotonline#zp/task-detail/2533013000003725226"
+        },
+        "self": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003732819/tasks/2533013000003725226/"
+        }
+      },
+      "description": "",
+      "created_by_zpuid": "2533013000000059003",
+      "work_form": "standard_work",
+      "end_date_long": 1784534400000,
+      "duration": "0",
+      "created_by_email": "ellwaa@ellwaa.org",
+      "key": "10C0-T2",
+      "start_date": "07-20-2026",
+      "created_person": "Walid Mohsen",
+      "created_time_long": 1784466665178,
+      "is_reminder_set": false,
+      "is_recurrence_set": false,
+      "created_time_format": "07-19-2026 02:11:05 PM",
+      "created_by_full_name": "Walid Mohsen",
+      "subtasks": false,
+      "duration_type": "days",
+      "percent_complete": "0",
+      "GROUP_NAME": {
+        "ASSOCIATED_TEAMS": {
+          "AnyTeam": "Not Associated"
+        },
+        "ASSOCIATED_TEAMS_COUNT": 0,
+        "IS_TEAM_UNASSIGNED": true
+      },
+      "id_string": "2533013000003725226",
+      "log_hours": {
+        "non_billable_hours": "0.0",
+        "billable_hours": "0.0"
+      }
+    },
+    {
+      "start_date_long": 1784534400000,
+      "is_comment_added": false,
+      "end_date_format": "07-20-2026 09:00:00 AM",
+      "added_via": "web",
+      "last_updated_time_long": 1784466503967,
+      "is_forum_associated": false,
+      "details": {
+        "owners": [
+          {
+            "zpuid": "2533013000000816007",
+            "full_name": "fatema ellwaa",
+            "work": "00:00",
+            "name": "fatema",
+            "last_name": "ellwaa",
+            "id": "905858093",
+            "first_name": "fatema",
+            "email": "fatemaellwaa@gmail.com"
+          }
+        ]
+      },
+      "id": 2533013000003724000,
+      "created_time": "07-19-2026",
+      "dependency": {
+        "dependencyDetails": {
+          "2533013000003723623": {
+            "PROJECTID": "2533013000003732736",
+            "DEPENDENCY_TYPE": "FS",
+            "IS_COMPLETED": true,
+            "PROJECTNAME": "1072-113-1",
+            "KEY": "10CG-T3",
+            "NAME": "عمل جروب واتس اب للعميل"
+          },
+          "2533013000003723621": {
+            "PROJECTID": "2533013000003732736",
+            "DEPENDENCY_TYPE": "SS",
+            "IS_COMPLETED": true,
+            "PROJECTNAME": "1072-113-1",
+            "KEY": "10CG-T1",
+            "NAME": "دفعة بدون فاتورة"
+          }
+        },
+        "successor": [
+          "2533013000003723623"
+        ],
+        "predecessor": [
+          "2533013000003723621"
+        ]
+      },
+      "work": "00:00",
+      "start_date_format": "07-20-2026 09:00:00 AM",
+      "isparent": false,
+      "completed_time_long": 1784466503967,
+      "work_type": "work_hours",
+      "completed": true,
+      "task_followers": {
+        "FOLUSERS": "",
+        "FOLLOWERSIZE": -1,
+        "FOLLOWERS": []
+      },
+      "priority": "None",
+      "task_duration_as_work": false,
+      "created_by": "887911019",
+      "last_updated_time": "07-19-2026",
+      "name": "تحويل بنكى سعودى 15 % فاتورة قيمة مضافة (تكلفة اضافية)",
+      "is_docs_assocoated": false,
+      "tasklist": {
+        "name": "دفع الدفعة الاولى",
+        "id_string": "2533013000003723612",
+        "id": "2533013000003723612"
+      },
+      "last_updated_time_format": "07-19-2026 02:08:23 PM",
+      "billingtype": "None",
+      "order_sequence": 4,
+      "status": {
+        "name": "Cancelled",
+        "id": "2533013000000031011",
+        "type": "closed",
+        "color_code": "#808080"
+      },
+      "end_date": "07-20-2026",
+      "milestone_id": "2533013000003723609",
+      "link": {
+        "timesheet": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003732736/tasks/2533013000003723622/logs/"
+        },
+        "web": {
+          "url": "https://projects.zoho.com/portal/ellwaadotonline#zp/task-detail/2533013000003723622"
+        },
+        "self": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003732736/tasks/2533013000003723622/"
+        }
+      },
+      "description": "",
+      "created_by_zpuid": "2533013000000059003",
+      "work_form": "standard_work",
+      "completed_time_format": "07-19-2026 02:08:23 PM",
+      "end_date_long": 1784534400000,
+      "duration": "0",
+      "created_by_email": "ellwaa@ellwaa.org",
+      "key": "10CG-T2",
+      "start_date": "07-20-2026",
+      "created_person": "Walid Mohsen",
+      "created_time_long": 1784463683256,
+      "is_reminder_set": false,
+      "is_recurrence_set": false,
+      "created_time_format": "07-19-2026 01:21:23 PM",
+      "created_by_full_name": "Walid Mohsen",
+      "subtasks": false,
+      "duration_type": "days",
+      "percent_complete": "100",
+      "GROUP_NAME": {
+        "ASSOCIATED_TEAMS": {
+          "AnyTeam": "Not Associated"
+        },
+        "ASSOCIATED_TEAMS_COUNT": 0,
+        "IS_TEAM_UNASSIGNED": true
+      },
+      "completed_time": "07-19-2026",
+      "id_string": "2533013000003723622",
+      "log_hours": {
+        "non_billable_hours": "0.0",
+        "billable_hours": "0.0"
+      }
+    }
+  ],
+  "ts": "2026-07-20T09:23:08.994Z"
 }
