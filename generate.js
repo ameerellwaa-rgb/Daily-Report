@@ -101,8 +101,17 @@ let _milestoneSampleLogged = false;
 let _taskSampleLogged = false;
 const _debugSamples = { milestones: [], tasks: [] };
 
+let _diagCount = 0;
+
 async function getProjectData(token, project) {
   const pid = project.id_string;
+  _diagCount++;
+
+  // Log first project's task-count fields to diagnose
+  if (_diagCount === 1) {
+    console.log(`  DIAG project fields: task_count=${JSON.stringify(project.task_count)}, tasks=${JSON.stringify(project.tasks)}`);
+  }
+
   const openTaskCount = (project.task_count && project.task_count.open) || 0;
 
   // Always fetch milestones (needed for p2/p3 checks)
@@ -115,12 +124,19 @@ async function getProjectData(token, project) {
     if (dafaa) _debugSamples.milestones.push(dafaa);
   }
 
-  // Skip tasks fetch if project has 0 open tasks (saves API calls)
   let tasks = [];
   if (openTaskCount > 0) {
     const tasksRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all`);
     tasks = tasksRes.tasks || [];
-    // Capture first task sample for debug
+    if (_debugSamples.tasks.length < 3 && tasks.length > 0) {
+      _debugSamples.tasks.push(tasks[0]);
+    }
+  } else if (_diagCount <= 5) {
+    // Always fetch tasks for first 5 projects to check if task_count gate is wrong
+    console.log(`  DIAG #${_diagCount} pid=${pid} task_count.open=${openTaskCount} — force-fetching tasks`);
+    const tasksRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all`);
+    tasks = tasksRes.tasks || [];
+    console.log(`  DIAG #${_diagCount} tasks returned: ${tasks.length}, first: "${tasks[0]?.name || 'none'}"`);
     if (_debugSamples.tasks.length < 3 && tasks.length > 0) {
       _debugSamples.tasks.push(tasks[0]);
     }
