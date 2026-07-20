@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 const https = require('https');
 const fs    = require('fs');
 
@@ -252,6 +252,7 @@ async function main() {
       month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
     }),
     month: ids.month || new Date().toISOString().slice(0,7),
+    dateKey: new Date().toISOString().slice(0, 10),
   };
 
   console.log('\nFinal metrics:');
@@ -260,6 +261,29 @@ async function main() {
   }
   console.log('  AM Active:', amActive);
   console.log('  AM OnHold:', amOnHold);
+
+  // ── Save history snapshot ────────────────────────────────────────────────────
+  const dateKey = new Date().toISOString().slice(0, 10); // "2026-07-20"
+  if (!fs.existsSync('history')) fs.mkdirSync('history');
+
+  const ALL_KEYS = [...METRIC_KEYS, 'completedMonth', 'completed112', 'onHold'];
+  const histEntry = {
+    date:      dateKey,
+    updatedAt: data.updatedAt,
+    metrics:   Object.fromEntries(ALL_KEYS.map(k => [k, data[k].total])),
+    amData:    data.amData,
+    details:   Object.fromEntries(ALL_KEYS.map(k => [k, data[k].details])),
+  };
+  fs.writeFileSync(`history/${dateKey}.json`, JSON.stringify(histEntry));
+
+  let histIndex = [];
+  try { histIndex = JSON.parse(fs.readFileSync('history/index.json', 'utf8')); } catch {}
+  if (!histIndex.includes(dateKey)) histIndex = [dateKey, ...histIndex].slice(0, 90);
+  fs.writeFileSync('history/index.json', JSON.stringify(histIndex));
+  console.log(`✓ history/${dateKey}.json saved (${histIndex.length} entries in index)`);
+
+  // Push history files directly to GitHub API (bypasses workflow git add restriction)
+  await pushHistoryToGitHub(dateKey, histEntry, histIndex);
 
   fs.writeFileSync('index.html', buildHTML(data));
   console.log('✓ index.html written');
@@ -271,6 +295,82 @@ async function main() {
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
   }, null, 2));
+}
+
+// ── Push history files to GitHub via API (repo-scope token, no workflow scope needed) ──
+async function pushHistoryToGitHub(dateKey, histEntry, histIndex) {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) { console.log('  [history push] no GITHUB_TOKEN — skipping'); return; }
+
+  const repo = 'ameerellwaa-rgb/Daily-Report';
+
+  function ghGet(filePath) {
+    return new Promise(resolve => {
+      const opts = {
+        hostname: 'api.github.com',
+        path: `/repos/${repo}/contents/${filePath}`,
+        method: 'GET',
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'daily-report-generator',
+        },
+      };
+      https.get(opts, res => {
+        let d = '';
+        res.on('data', c => d += c);
+        res.on('end', () => { try { resolve(JSON.parse(d)); } catch { resolve(null); } });
+      }).on('error', () => resolve(null));
+    });
+  }
+
+  function ghPut(filePath, contentStr, message, sha) {
+    return new Promise((resolve, reject) => {
+      const body = JSON.stringify({
+        message,
+        content: Buffer.from(contentStr).toString('base64'),
+        ...(sha ? { sha } : {}),
+      });
+      const opts = {
+        hostname: 'api.github.com',
+        path: `/repos/${repo}/contents/${filePath}`,
+        method: 'PUT',
+        headers: {
+          Authorization: `token ${token}`,
+          Accept: 'application/vnd.github+json',
+          'User-Agent': 'daily-report-generator',
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(body),
+        },
+      };
+      const req = https.request(opts, res => {
+        let d = '';
+        res.on('data', c => d += c);
+        res.on('end', () => resolve({ status: res.statusCode, body: d.slice(0, 200) }));
+      });
+      req.on('error', reject);
+      req.write(body);
+      req.end();
+    });
+  }
+
+  async function upsert(filePath, content, message) {
+    const existing = await ghGet(filePath);
+    const sha = existing && existing.sha ? existing.sha : null;
+    const r = await ghPut(filePath, content, message, sha);
+    if (r.status === 200 || r.status === 201) {
+      console.log(`  [history push] ✓ ${filePath}`);
+    } else {
+      console.log(`  [history push] ✗ ${filePath} HTTP ${r.status}: ${r.body}`);
+    }
+  }
+
+  try {
+    await upsert(`history/${dateKey}.json`, JSON.stringify(histEntry), `history: ${dateKey}`);
+    await upsert('history/index.json',       JSON.stringify(histIndex),  `history index: ${dateKey}`);
+  } catch (e) {
+    console.error('  [history push] error:', e.message);
+  }
 }
 
 // ── HTML ──────────────────────────────────────────────────────────────────────
@@ -291,7 +391,7 @@ function buildHTML(d) {
     const oh = d.amData.onHold[amEn]  || 0;
     const p2 = d.p2.byManager[amEn]   || 0;
     const p3 = d.p3.byManager[amEn]   || 0;
-    return `<tr><td class="am-name">${ar}</td><td><span class="badge b-green">${ac}</span></td><td><span class="badge b-gold">${oh}</span></td><td><span class="badge b-red">${p2}</span></td><td><span class="badge b-red">${p3}</span></td></tr>`;
+    return `<tr id="am-row-${amEn.replace(/ /g,'_')}"><td class="am-name">${ar}</td><td><span class="badge b-green">${ac}</span></td><td><span class="badge b-gold">${oh}</span></td><td><span class="badge b-red">${p2}</span></td><td><span class="badge b-red">${p3}</span></td></tr>`;
   }).join('');
 
   const totActive = AM_ORDER.reduce((s,am) => s + (d.amData.active[am] || 0), 0);
@@ -329,7 +429,7 @@ function buildHTML(d) {
 <div class="detail-block">
   <div class="detail-head">
     <div style="display:flex;align-items:center;gap:10px">
-      <span class="badge ${color}" style="font-size:14px;padding:4px 14px;min-width:38px">${total}</span>
+      <span id="db-${key}" class="badge ${color}" style="font-size:14px;padding:4px 14px;min-width:38px">${total}</span>
       <h3 style="font-size:13px;font-weight:700;color:var(--text)">${label}</h3>
     </div>
     <button class="dl-btn" data-key="${key}" data-lbl="${label}" onclick="dlCSV(this.dataset.key,this.dataset.lbl)">⬇ Excel</button>
@@ -337,7 +437,7 @@ function buildHTML(d) {
   <div class="detail-scroll">
     <table>
       <thead><tr><th style="width:36px">#</th><th style="text-align:right">اسم المشروع</th><th>المسؤول</th></tr></thead>
-      <tbody>${tbodyRows}</tbody>
+      <tbody id="dtb-${key}">${tbodyRows}</tbody>
     </table>
   </div>
 </div>`;
@@ -409,13 +509,31 @@ tbody tr:hover td{background:rgba(201,169,97,.04)}
 .detail-scroll table{min-width:unset}
 .detail-scroll thead tr{position:sticky;top:0;z-index:1}
 footer{text-align:center;color:var(--text-dim);font-size:11px;padding:12px}
+.hist-bar{display:flex;align-items:center;gap:10px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:8px 16px;margin-bottom:12px;flex-wrap:wrap}
+.hist-btn{background:var(--gold-muted);border:1px solid var(--gold-border);color:var(--gold);width:30px;height:30px;border-radius:7px;font-size:16px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+.hist-btn:hover{background:rgba(201,169,97,.22)}.hist-btn:disabled{opacity:.3;cursor:default}
+.hist-label{font-size:13px;font-weight:700;color:var(--text);min-width:110px;text-align:center}
+#hist-select{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:7px;font-family:inherit;font-size:12px;cursor:pointer;margin-right:auto}
+.hist-tag{font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px}
+.tag-live{background:var(--green-muted);color:var(--green)}.tag-past{background:var(--gold-muted);color:var(--gold)}
 @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.detail-grid{grid-template-columns:1fr}}
 @media(max-width:500px){.kpi-grid{grid-template-columns:1fr}}
 </style>
 <script>
-const _D = ${dataForDownload};
+const _D   = ${dataForDownload};
+const _M   = ${JSON.stringify(Object.fromEntries(
+  ['p2','p3','recv','coll','licMonth','sijilSaudi','clientApproval','overDue','sijilDelay','sijilAmer','amer',
+   'completedMonth','completed112','onHold'].map(k => [k, d[k].total])
+))};
+const _A   = ${JSON.stringify(d.amData)};
+const _TODAY = '${d.dateKey}';
+let   _Dcur = _D;
+
+const AM_ORDER_AR = ${JSON.stringify(AM_ORDER.map(e => ({ en: e, ar: AM_MAP[e] })))};
+
+// ── CSV download ──────────────────────────────────────────────────────────────
 function dlCSV(key, label) {
-  const rows = _D[key] || [];
+  const rows = _Dcur[key] || [];
   const bom  = String.fromCharCode(0xFEFF);
   const hdr  = 'اسم المشروع,المسؤول\\n';
   const body = rows.map(r =>
@@ -428,6 +546,121 @@ function dlCSV(key, label) {
   document.body.appendChild(a); a.click();
   document.body.removeChild(a); URL.revokeObjectURL(url);
 }
+
+// ── Render functions ──────────────────────────────────────────────────────────
+const KPI_KEYS = ['onHold','p2','p3','licMonth','completedMonth','completed112','overDue','sijilDelay','sijilAmer'];
+const ALL_KEYS = ['p2','p3','recv','coll','licMonth','sijilSaudi','clientApproval','overDue','sijilDelay','sijilAmer','amer','completedMonth','completed112','onHold'];
+
+function renderKPIs(metrics) {
+  KPI_KEYS.forEach(k => {
+    const el = document.getElementById('kv-' + k);
+    if (el) el.textContent = metrics[k] ?? 0;
+  });
+}
+
+function renderAM(amData) {
+  AM_ORDER_AR.forEach(({ en, ar }) => {
+    const row = document.getElementById('am-row-' + en.replace(/ /g,'_'));
+    if (!row) return;
+    const cells = row.querySelectorAll('td');
+    if (cells.length < 5) return;
+    cells[1].querySelector('.badge').textContent = amData.active[en] || 0;
+    cells[2].querySelector('.badge').textContent = amData.onHold[en] || 0;
+    // p2/p3 byManager not in history — show 0 if not available
+    cells[3].querySelector('.badge').textContent = 0;
+    cells[4].querySelector('.badge').textContent = 0;
+  });
+  // totals
+  const totAc = AM_ORDER_AR.reduce((s,{en}) => s + (amData.active[en]||0), 0);
+  const totOh = AM_ORDER_AR.reduce((s,{en}) => s + (amData.onHold[en]||0), 0);
+  const tot = document.getElementById('am-totals');
+  if (tot) {
+    tot.children[1].querySelector('.badge').textContent = totAc;
+    tot.children[2].querySelector('.badge').textContent = totOh;
+    tot.children[3].querySelector('.badge').textContent = 0;
+    tot.children[4].querySelector('.badge').textContent = 0;
+  }
+}
+
+function renderDetails(metrics, details) {
+  ALL_KEYS.forEach(k => {
+    const badge = document.getElementById('db-' + k);
+    if (badge) badge.textContent = metrics[k] ?? 0;
+    const tbody = document.getElementById('dtb-' + k);
+    if (!tbody) return;
+    const rows = details[k] || [];
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-dim);padding:20px 0">لا توجد بيانات</td></tr>';
+    } else {
+      tbody.innerHTML = rows.map((r,i) =>
+        '<tr><td style="color:var(--text-dim);width:36px">' + (i+1) + '</td>' +
+        '<td style="text-align:right">' + (r.name||'') + '</td>' +
+        '<td>' + (r.owner||'') + '</td></tr>'
+      ).join('');
+    }
+  });
+}
+
+// ── History navigation ────────────────────────────────────────────────────────
+let _histIndex = [];
+let _histPos   = -1; // -1 = today
+
+async function initHistory() {
+  try {
+    const r = await fetch('history/index.json');
+    _histIndex = await r.json();
+    const sel = document.getElementById('hist-select');
+    if (sel) sel.innerHTML =
+      '<option value="-1">اليوم</option>' +
+      _histIndex.map((d,i) => '<option value="' + i + '">' + d + '</option>').join('');
+  } catch {}
+  updateHistNav();
+}
+
+function updateHistNav() {
+  const lbl = document.getElementById('hist-label');
+  const tag = document.getElementById('hist-tag');
+  const sel = document.getElementById('hist-select');
+  const btnP = document.getElementById('hist-prev');
+  const btnN = document.getElementById('hist-next');
+  if (_histPos === -1) {
+    if (lbl) lbl.textContent = _TODAY;
+    if (tag) { tag.textContent = 'مباشر'; tag.className = 'hist-tag tag-live'; }
+    if (sel) sel.value = '-1';
+    if (btnN) btnN.disabled = true;
+  } else {
+    if (lbl) lbl.textContent = _histIndex[_histPos] || '';
+    if (tag) { tag.textContent = 'تاريخي'; tag.className = 'hist-tag tag-past'; }
+    if (sel) sel.value = String(_histPos);
+    if (btnN) btnN.disabled = _histPos <= 0;
+  }
+  if (btnP) btnP.disabled = _histPos >= _histIndex.length - 1;
+}
+
+async function loadHistPos(pos) {
+  _histPos = pos;
+  if (pos === -1) {
+    _Dcur = _D;
+    renderKPIs(_M); renderAM(_A); renderDetails(_M, _D);
+    document.getElementById('upd-at').textContent = '${d.updatedAt}';
+    updateHistNav(); return;
+  }
+  const dateStr = _histIndex[pos];
+  if (!dateStr) return;
+  try {
+    const r = await fetch('history/' + dateStr + '.json');
+    const h = await r.json();
+    _Dcur = h.details || {};
+    renderKPIs(h.metrics || {}); renderAM(h.amData || {active:{},onHold:{}}); renderDetails(h.metrics || {}, h.details || {});
+    document.getElementById('upd-at').textContent = h.updatedAt || dateStr;
+  } catch { console.error('failed to load history', dateStr); }
+  updateHistNav();
+}
+
+function histNav(dir) { loadHistPos(Math.max(-1, Math.min(_histIndex.length - 1, _histPos + dir))); }
+function histSelect(v) { loadHistPos(parseInt(v)); }
+
+window.addEventListener('DOMContentLoaded', initHistory);
 </script>
 </head>
 <body>
@@ -442,48 +675,56 @@ function dlCSV(key, label) {
   </div>
   <div class="header-meta">
     <div class="live-badge"><span class="pulse-dot"></span>Zoho Projects Live</div>
-    <div class="update-time"><strong>آخر تحديث</strong>${d.updatedAt}</div>
+    <div class="update-time"><strong>آخر تحديث</strong><span id="upd-at">${d.updatedAt}</span></div>
   </div>
 </header>
+
+<div class="hist-bar">
+  <button class="hist-btn" id="hist-prev" onclick="histNav(1)" title="يوم سابق">◀</button>
+  <span class="hist-label" id="hist-label">${d.dateKey}</span>
+  <button class="hist-btn" id="hist-next" onclick="histNav(-1)" title="يوم تالٍ" disabled>▶</button>
+  <span class="hist-tag tag-live" id="hist-tag">مباشر</span>
+  <select id="hist-select" onchange="histSelect(this.value)"><option value="-1">اليوم</option></select>
+</div>
 
 <div class="kpi-grid">
   <div class="kpi-card c-gold">
     <div class="kpi-top"><div class="kpi-label">عملاء أون هولد</div><div class="kpi-icon">⏸️</div></div>
-    <div class="kpi-value">${d.onHold.total}</div>
+    <div class="kpi-value" id="kv-onHold">${d.onHold.total}</div>
   </div>
   <div class="kpi-card c-red">
     <div class="kpi-top"><div class="kpi-label">الدفعة الثانية المتأخرة</div><div class="kpi-icon">💰</div></div>
-    <div class="kpi-value">${d.p2.total}</div>
+    <div class="kpi-value" id="kv-p2">${d.p2.total}</div>
   </div>
   <div class="kpi-card c-red">
     <div class="kpi-top"><div class="kpi-label">الدفعة الثالثة المتأخرة</div><div class="kpi-icon">💸</div></div>
-    <div class="kpi-value">${d.p3.total}</div>
+    <div class="kpi-value" id="kv-p3">${d.p3.total}</div>
   </div>
 
   <div class="kpi-card c-gold">
     <div class="kpi-top"><div class="kpi-label">صدور الترخيص في الشهر</div><div class="kpi-icon">📜</div></div>
-    <div class="kpi-value">${d.licMonth.total}</div>
+    <div class="kpi-value" id="kv-licMonth">${d.licMonth.total}</div>
   </div>
   <div class="kpi-card c-green">
     <div class="kpi-top"><div class="kpi-label">العملاء المنتهون في الشهر</div><div class="kpi-icon">✅</div></div>
-    <div class="kpi-value">${d.completedMonth.total}</div>
+    <div class="kpi-value" id="kv-completedMonth">${d.completedMonth.total}</div>
   </div>
   <div class="kpi-card c-green">
     <div class="kpi-top"><div class="kpi-label">المنتهون شغل مصر فقط</div><div class="kpi-icon">🇪🇬</div></div>
-    <div class="kpi-value">${d.completed112.total}</div>
+    <div class="kpi-value" id="kv-completed112">${d.completed112.total}</div>
   </div>
 
   <div class="kpi-card c-red">
     <div class="kpi-top"><div class="kpi-label">التأخير في الأوفر فيو</div><div class="kpi-icon">⏰</div></div>
-    <div class="kpi-value">${d.overDue.total}</div>
+    <div class="kpi-value" id="kv-overDue">${d.overDue.total}</div>
   </div>
   <div class="kpi-card c-red">
     <div class="kpi-top"><div class="kpi-label">تأخير تسليم السجل التجاري</div><div class="kpi-icon">🗂️</div></div>
-    <div class="kpi-value">${d.sijilDelay.total}</div>
+    <div class="kpi-value" id="kv-sijilDelay">${d.sijilDelay.total}</div>
   </div>
   <div class="kpi-card c-green">
     <div class="kpi-top"><div class="kpi-label">السجل جاهز وامريكا مفتوحة</div><div class="kpi-icon">🌐</div></div>
-    <div class="kpi-value">${d.sijilAmer.total}</div>
+    <div class="kpi-value" id="kv-sijilAmer">${d.sijilAmer.total}</div>
   </div>
 </div>
 
@@ -501,7 +742,7 @@ function dlCSV(key, label) {
     </thead>
     <tbody>
       ${amRows}
-      <tr class="total-row">
+      <tr class="total-row" id="am-totals">
         <td>الإجمالي</td>
         <td><span class="badge b-green">${totActive}</span></td>
         <td><span class="badge b-gold">${totOnHold}</span></td>
