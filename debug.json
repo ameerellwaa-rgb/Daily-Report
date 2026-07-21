@@ -3,14 +3,14 @@
     "p2": 46,
     "p3": 51,
     "recv": 44,
-    "coll": 28,
+    "coll": 26,
     "licMonth": 54,
-    "sijilSaudi": 110,
+    "sijilSaudi": 111,
     "clientApproval": 55,
     "overDue": 1,
     "sijilDelay": 1,
     "sijilAmer": 2,
-    "amer": 13,
+    "amer": 12,
     "completedMonth": 31,
     "completed112": 8
   },
@@ -408,5 +408,5 @@
       }
     }
   ],
-  "ts": "2026-07-21T08:37:41.681Z"
+  "ts": "2026-07-21T09:54:59.422Z"
 }
