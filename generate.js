@@ -163,11 +163,19 @@ async function main() {
     nameMap[p.id_string]  = p.name || p.id_string;
   }
 
-  // DEBUG: log status fields for first 5 projects to understand v2 API structure
-  console.log('[debug] sample project status fields:');
-  projects.slice(0, 5).forEach((p, i) => {
-    console.log(`  [${i}] id=${p.id_string} status=${JSON.stringify(p.status)} is_archived=${p.is_archived} sub_status=${JSON.stringify(p.sub_status)}`);
-  });
+  // DEBUG: log ALL distinct status values across all projects
+  const statusCounts = {};
+  for (const p of projects) {
+    const s = JSON.stringify(p.status);
+    statusCounts[s] = (statusCounts[s] || 0) + 1;
+  }
+  console.log('[debug] distinct status values:', JSON.stringify(statusCounts));
+  // Log one sample project's full keys to spot status-related fields
+  if (projects.length > 0) {
+    const sample = projects[0];
+    const statusFields = Object.keys(sample).filter(k => k.toLowerCase().includes('stat') || k.toLowerCase().includes('hold') || k.toLowerCase().includes('arch'));
+    console.log('[debug] status-related keys in project:', statusFields.map(k => `${k}=${JSON.stringify(sample[k])}`).join(', '));
+  }
 
   // Load project_ids.json (active_only, on_hold, completed_this_month, completed_this_month_112)
   const ids = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
