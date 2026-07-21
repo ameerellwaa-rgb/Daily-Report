@@ -94,6 +94,23 @@ tbody tr:hover td{background:rgba(14,168,152,.02)}
 .save-ind.saved{color:var(--green)}
 .save-ind.err{color:var(--red)}
 
+/* ── Manual entries ───────────────────────────────── */
+.manual-row td{background:rgba(201,169,97,.025)!important}
+.manual-badge{font-size:9px;font-weight:700;color:var(--gold);background:var(--gold-muted);border:1px solid var(--gold-border);padding:1px 5px;border-radius:6px;margin-left:5px;vertical-align:middle}
+.manual-del-btn{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:11px;padding:2px 5px;border-radius:4px;transition:all .15s;vertical-align:middle;margin-left:4px}
+.manual-del-btn:hover{color:var(--red)!important;background:var(--red-muted)}
+.add-manual-bar{padding:8px 0 2px}
+.add-manual-toggle{background:none;border:1px dashed var(--gold-border);color:var(--text-dim);padding:7px 14px;border-radius:8px;font-family:inherit;font-size:11px;cursor:pointer;width:100%;text-align:center;transition:all .15s}
+.add-manual-toggle:hover{border-color:var(--gold);color:var(--gold)}
+.manual-form{display:none;background:rgba(201,169,97,.04);border:1px solid var(--gold-border);border-radius:9px;padding:12px;margin-top:7px}
+.manual-form.open{display:block}
+.manual-inputs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.manual-inp{flex:1;min-width:120px;background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--text);border-radius:7px;padding:7px 10px;font-family:inherit;font-size:12px}
+.manual-inp:focus{border-color:var(--gold);outline:none}
+.manual-save-btn{background:var(--gold-muted);border:1px solid var(--gold-border);color:var(--gold);padding:6px 16px;border-radius:6px;font-family:inherit;font-size:11px;font-weight:700;cursor:pointer;transition:background .15s}
+.manual-save-btn:hover{background:rgba(201,169,97,.22)}
+.manual-save-btn:disabled{opacity:.4;cursor:default}
+
 .placeholder-panel{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:48px;text-align:center;color:var(--text-dim);font-size:13px}
 .page-loading{text-align:center;color:var(--text-dim);padding:60px;font-size:14px}
 footer{text-align:center;color:var(--text-dim);font-size:11px;padding:16px 0 4px}
@@ -226,6 +243,15 @@ const SUB_TABS  = {
   egypt: ['sijilDelay','sahayef'],
 };
 
+const PANEL_MAP = {
+  onHold:         { mainTab:'am',    label:'عملاء أون هولد' },
+  p2:             { mainTab:'am',    label:'الدفعة الثانية المتأخرة' },
+  p3:             { mainTab:'am',    label:'الدفعة الثالثة المتأخرة' },
+  overDue:        { mainTab:'saudi', label:'التأخير في الأوفر فيو' },
+  clientApproval: { mainTab:'saudi', label:'موافقة العميل على الأوفر فيو' },
+  sijilDelay:     { mainTab:'egypt', label:'التأخير في تسليم السجل التجاري' },
+};
+
 // ── Data ──────────────────────────────────────────────────────────────────────
 let _hist     = {};
 let _feedback = {};
@@ -244,13 +270,12 @@ async function loadAll() {
 
     document.getElementById('page-loading').style.display = 'none';
 
-    // Render each sub-panel
-    renderPanel('am',    'onHold',         'عملاء أون هولد');
-    renderPanel('am',    'p2',              'الدفعة الثانية المتأخرة');
-    renderPanel('am',    'p3',              'الدفعة الثالثة المتأخرة');
-    renderPanel('saudi', 'overDue',         'التأخير في الأوفر فيو');
-    renderPanel('saudi', 'clientApproval',  'موافقة العميل على الأوفر فيو');
-    renderPanel('egypt', 'sijilDelay',      'التأخير في تسليم السجل التجاري');
+    renderPanel('am',    'onHold');
+    renderPanel('am',    'p2');
+    renderPanel('am',    'p3');
+    renderPanel('saudi', 'overDue');
+    renderPanel('saudi', 'clientApproval');
+    renderPanel('egypt', 'sijilDelay');
 
   } catch(e) {
     document.getElementById('page-loading').textContent = '❌ خطأ: ' + e.message;
@@ -269,20 +294,22 @@ async function reloadFeedback() {
 }
 
 // ── Render ────────────────────────────────────────────────────────────────────
-function renderPanel(mainTab, key, label) {
+function getManualEntries(key) {
+  return (_feedback['__manual__::' + key] || []);
+}
+
+function renderPanel(mainTab, key) {
   const el = document.getElementById('sub-' + mainTab + '-' + key);
   if (!el) return;
-  const rows = (_hist.details || {})[key] || [];
+
+  const rows    = (_hist.details || {})[key] || [];
+  const manuals = getManualEntries(key);
+  const total   = rows.length + manuals.length;
 
   const stc = document.getElementById('stc-' + key);
-  if (stc) stc.textContent = rows.length;
+  if (stc) stc.textContent = total;
 
-  if (!rows.length) {
-    el.innerHTML = '<div class="placeholder-panel">✅ لا توجد حالات حالياً</div>';
-    return;
-  }
-
-  const tbody = rows.map((r, i) => {
+  const autoTbody = rows.map((r, i) => {
     const fkey = key + '::' + r.name;
     return `<tr>
       <td class="td-num">${i+1}</td>
@@ -290,26 +317,52 @@ function renderPanel(mainTab, key, label) {
       <td class="td-am">${esc(r.owner)}</td>
       <td class="td-notes" data-fkey="${esc(fkey)}">
         <div class="notes-thread">${renderNotes(getNotes(fkey), fkey)}</div>
-        <div class="note-new">
-          <textarea class="note-inp" rows="1" placeholder="متابعة جديدة... (Ctrl+Enter للحفظ)"></textarea>
-          <div class="note-actions">
-            <button class="note-add-btn" onclick="addNote(this)">+ إضافة</button>
-            <span class="save-ind"></span>
-          </div>
-        </div>
+        ${noteFormHTML()}
       </td>
     </tr>`;
   }).join('');
 
-  el.innerHTML = `<div class="table-wrap"><table>
-    <thead><tr>
-      <th style="width:36px;text-align:center">#</th>
-      <th>ID / اسم العميل</th>
-      <th style="text-align:center">الاكونت مانجر</th>
-      <th>المتابعات</th>
-    </tr></thead>
-    <tbody>${tbody}</tbody>
-  </table></div>`;
+  const manualTbody = manuals.map((r, idx) => {
+    const fkey = key + '::' + r.name;
+    return `<tr class="manual-row">
+      <td class="td-num">${rows.length + idx + 1}</td>
+      <td class="td-id">
+        <button class="manual-del-btn" data-key="${esc(key)}" data-maintab="${esc(mainTab)}" data-idx="${idx}" onclick="handleDelManual(this)" title="حذف المدخل">✕</button>
+        <span class="manual-badge">يدوي</span> ${esc(r.name)}
+      </td>
+      <td class="td-am">${esc(r.owner || '—')}</td>
+      <td class="td-notes" data-fkey="${esc(fkey)}">
+        <div class="notes-thread">${renderNotes(getNotes(fkey), fkey)}</div>
+        ${noteFormHTML()}
+      </td>
+    </tr>`;
+  }).join('');
+
+  const emptyRow = total === 0
+    ? `<tr><td colspan="4" style="text-align:center;color:var(--text-dim);padding:24px">✅ لا توجد حالات حالياً</td></tr>`
+    : '';
+
+  el.innerHTML = `
+    <div class="table-wrap"><table>
+      <thead><tr>
+        <th style="width:36px;text-align:center">#</th>
+        <th>ID / اسم العميل</th>
+        <th style="text-align:center;width:90px">الاكونت مانجر</th>
+        <th>المتابعات</th>
+      </tr></thead>
+      <tbody>${emptyRow}${autoTbody}${manualTbody}</tbody>
+    </table></div>
+    <div class="add-manual-bar">
+      <button class="add-manual-toggle" onclick="toggleManualForm('${esc(key)}')">＋ إضافة حالة يدوياً</button>
+      <div class="manual-form" id="mf-${esc(key)}">
+        <div class="manual-inputs">
+          <input class="manual-inp" id="mf-name-${esc(key)}" placeholder="ID أو اسم العميل">
+          <input class="manual-inp" id="mf-owner-${esc(key)}" placeholder="الاكونت مانجر (اختياري)">
+        </div>
+        <button class="manual-save-btn" id="mf-btn-${esc(key)}" onclick="saveManual('${esc(key)}','${esc(mainTab)}')">حفظ</button>
+        <span class="save-ind" id="mf-si-${esc(key)}"></span>
+      </div>
+    </div>`;
 
   el.querySelectorAll('.note-inp').forEach(ta => {
     ta.addEventListener('input', () => autoH(ta));
@@ -322,13 +375,23 @@ function renderPanel(mainTab, key, label) {
   });
 }
 
+function noteFormHTML() {
+  return `<div class="note-new">
+    <textarea class="note-inp" rows="1" placeholder="متابعة جديدة... (Ctrl+Enter للحفظ)"></textarea>
+    <div class="note-actions">
+      <button class="note-add-btn" onclick="addNote(this)">+ إضافة</button>
+      <span class="save-ind"></span>
+    </div>
+  </div>`;
+}
+
 function renderNotes(notes, fkey) {
   if (!notes.length) return '';
   return notes.map((n, idx) => `
     <div class="note-item">
       <span class="note-date">${fmtDate(n.date)}</span>
       <span class="note-text">${esc(n.text)}</span>
-      <button class="note-del" onclick="delNote(${JSON.stringify(fkey)},${idx})" title="حذف">✕</button>
+      <button class="note-del" data-fkey="${esc(fkey)}" data-idx="${idx}" onclick="handleDelNote(this)" title="حذف">✕</button>
     </div>`).join('');
 }
 
@@ -336,9 +399,15 @@ function getNotes(fkey) {
   const e = _feedback[fkey];
   if (!e) return [];
   if (e.notes) return e.notes;
-  // Migrate old single-feedback format
   if (e.feedback) return [{ text:e.feedback, date:(e.updatedAt||'').slice(0,10), addedAt:e.updatedAt }];
   return [];
+}
+
+// ── Note handlers ─────────────────────────────────────────────────────────────
+function handleDelNote(btn) {
+  const fkey = btn.dataset.fkey;
+  const idx  = parseInt(btn.dataset.idx);
+  delNote(fkey, idx);
 }
 
 // ── Add note ──────────────────────────────────────────────────────────────────
@@ -387,7 +456,6 @@ async function addNote(btn) {
 
 // ── Delete note ───────────────────────────────────────────────────────────────
 async function delNote(fkey, idx) {
-  if (!confirm('حذف هذه المتابعة؟')) return;
   const notes = [...getNotes(fkey)];
   notes.splice(idx, 1);
   try {
@@ -397,13 +465,81 @@ async function delNote(fkey, idx) {
     remote[fkey] = { notes };
     _feedback = remote;
     await ghPut(FB_FILE, remote, getData.sha, 'quality: delete note');
-    // Update all TDs that match this fkey
     document.querySelectorAll('.td-notes').forEach(td => {
       if (td.dataset.fkey === fkey) {
         td.querySelector('.notes-thread').innerHTML = renderNotes(notes, fkey);
       }
     });
-  } catch(e) { console.error('delNote:', e); alert('خطأ في الحذف'); }
+  } catch(e) { console.error('delNote:', e); }
+}
+
+// ── Manual entry handlers ─────────────────────────────────────────────────────
+function toggleManualForm(key) {
+  const f = document.getElementById('mf-' + key);
+  if (f) f.classList.toggle('open');
+}
+
+function handleDelManual(btn) {
+  const key     = btn.dataset.key;
+  const mainTab = btn.dataset.maintab;
+  const idx     = parseInt(btn.dataset.idx);
+  delManualEntry(key, mainTab, idx);
+}
+
+async function delManualEntry(key, mainTab, idx) {
+  try {
+    const getR    = await ghGet(FB_FILE);
+    const getData = await getR.json();
+    const remote  = JSON.parse(b64dec(getData.content));
+    const mkey    = '__manual__::' + key;
+    const entries = [...(remote[mkey] || [])];
+    entries.splice(idx, 1);
+    remote[mkey]  = entries;
+    _feedback     = remote;
+    await ghPut(FB_FILE, remote, getData.sha, 'quality: delete manual entry');
+    renderPanel(mainTab, key);
+  } catch(e) {
+    console.error('delManualEntry:', e);
+  }
+}
+
+async function saveManual(key, mainTab) {
+  const nameEl  = document.getElementById('mf-name-' + key);
+  const ownerEl = document.getElementById('mf-owner-' + key);
+  const siEl    = document.getElementById('mf-si-' + key);
+  const btnEl   = document.getElementById('mf-btn-' + key);
+
+  const name = (nameEl?.value || '').trim();
+  if (!name) {
+    if (nameEl) { nameEl.focus(); nameEl.style.borderColor='var(--red)'; setTimeout(()=>{nameEl.style.borderColor='';},2000); }
+    return;
+  }
+  const owner = (ownerEl?.value || '').trim();
+
+  if (btnEl) btnEl.disabled = true;
+  if (siEl) { siEl.className='save-ind saving'; siEl.textContent='...'; }
+
+  try {
+    const getR    = await ghGet(FB_FILE);
+    const getData = await getR.json();
+    const remote  = JSON.parse(b64dec(getData.content));
+    const mkey    = '__manual__::' + key;
+    remote[mkey]  = [{ name, owner, addedAt: new Date().toISOString() }, ...(remote[mkey] || [])];
+    _feedback     = remote;
+    await ghPut(FB_FILE, remote, getData.sha, 'quality: add manual entry');
+
+    if (nameEl) nameEl.value = '';
+    if (ownerEl) ownerEl.value = '';
+    if (siEl) { siEl.className='save-ind saved'; siEl.textContent='✓ تم'; }
+    setTimeout(() => { if(siEl){siEl.className='save-ind';siEl.textContent='';} }, 2500);
+
+    renderPanel(mainTab, key);
+
+  } catch(e) {
+    console.error('saveManual:', e);
+    if (siEl) { siEl.className='save-ind err'; siEl.textContent='✗ خطأ'; }
+    if (btnEl) btnEl.disabled = false;
+  }
 }
 
 // ── GitHub helpers ────────────────────────────────────────────────────────────
