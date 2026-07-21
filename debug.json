@@ -1,22 +1,22 @@
 {
   "metrics": {
-    "p2": 45,
-    "p3": 52,
-    "recv": 46,
+    "p2": 21,
+    "p3": 21,
+    "recv": 45,
     "coll": 27,
-    "licMonth": 51,
-    "sijilSaudi": 108,
-    "clientApproval": 57,
-    "overDue": 1,
-    "sijilDelay": 1,
+    "licMonth": 39,
+    "sijilSaudi": 51,
+    "clientApproval": 55,
+    "overDue": 0,
+    "sijilDelay": 0,
     "sijilAmer": 2,
-    "amer": 12,
-    "completedMonth": 31,
-    "completed112": 8
+    "amer": 11,
+    "completedMonth": 0,
+    "completed112": 0
   },
   "amActive": {
     "Mostafa Ellwaa": 5,
-    "fatema ellwaa": 38,
+    "fatema ellwaa": 36,
     "Jenna Ellwaa": 36,
     "Youssef Mellwaa": 37,
     "pola ellwaa": 55,
@@ -408,5 +408,5 @@
       }
     }
   ],
-  "ts": "2026-07-21T12:23:04.526Z"
+  "ts": "2026-07-21T13:12:36.840Z"
 }
