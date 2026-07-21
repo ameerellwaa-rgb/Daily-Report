@@ -168,7 +168,7 @@ async function main() {
   const activeOnlySet = new Set(ids.active_only);
 
   const activeOnlyProjects = projects.filter(p => activeOnlySet.has(p.id_string));
-  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}`);
+  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${projects.filter(isOnHold).length}`);
 
   // Count Active / OnHold per AM for the AM summary table
   const amActive = {};
