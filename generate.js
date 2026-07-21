@@ -438,7 +438,7 @@ function buildHTML(d) {
           `<tr><td style="color:var(--text-dim);width:36px">${i+1}</td><td style="text-align:right">${item.name}</td><td>${item.owner}</td></tr>`
         ).join('');
     return `
-<div class="detail-block">
+<div class="detail-block" id="detail-block-${key}">
   <div class="detail-head">
     <div style="display:flex;align-items:center;gap:10px">
       <span id="db-${key}" class="badge ${color}" style="font-size:14px;padding:4px 14px;min-width:38px">${total}</span>
@@ -486,7 +486,7 @@ body{font-family:'Cairo','Segoe UI',Tahoma,Arial,sans-serif;background:var(--bg)
 .update-time{font-size:11px;color:var(--text-dim);text-align:center}
 .update-time strong{display:block;font-size:13px;color:var(--text);margin-bottom:2px}
 .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px}
-.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:default}
+.kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:13px;padding:18px 20px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;cursor:pointer}
 .kpi-card:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.38)}
 .kpi-card::before{content:'';position:absolute;top:0;right:0;left:0;height:3px;border-radius:13px 13px 0 0}
 .c-red::before{background:var(--red)}.c-teal::before{background:var(--teal)}.c-gold::before{background:var(--gold)}.c-green::before{background:var(--green)}
@@ -709,6 +709,11 @@ function closePW() {
   document.getElementById('pw-err').textContent = '';
 }
 
+function scrollToDetail(key) {
+  const el = document.getElementById('detail-block-' + key);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 window.addEventListener('DOMContentLoaded', initHistory);
 </script>
 </head>
@@ -749,41 +754,41 @@ window.addEventListener('DOMContentLoaded', initHistory);
 </div>
 
 <div class="kpi-grid">
-  <div class="kpi-card c-gold">
+  <div class="kpi-card c-gold" onclick="scrollToDetail('onHold')">
     <div class="kpi-top"><div class="kpi-label">عملاء أون هولد</div><div class="kpi-icon">⏸️</div></div>
     <div class="kpi-value" id="kv-onHold">${d.onHold.total}</div>
   </div>
-  <div class="kpi-card c-red">
+  <div class="kpi-card c-red" onclick="scrollToDetail('p2')">
     <div class="kpi-top"><div class="kpi-label">الدفعة الثانية المتأخرة</div><div class="kpi-icon">💰</div></div>
     <div class="kpi-value" id="kv-p2">${d.p2.total}</div>
   </div>
-  <div class="kpi-card c-red">
+  <div class="kpi-card c-red" onclick="scrollToDetail('p3')">
     <div class="kpi-top"><div class="kpi-label">الدفعة الثالثة المتأخرة</div><div class="kpi-icon">💸</div></div>
     <div class="kpi-value" id="kv-p3">${d.p3.total}</div>
   </div>
 
-  <div class="kpi-card c-gold">
+  <div class="kpi-card c-gold" onclick="scrollToDetail('licMonth')">
     <div class="kpi-top"><div class="kpi-label">صدور الترخيص في الشهر</div><div class="kpi-icon">📜</div></div>
     <div class="kpi-value" id="kv-licMonth">${d.licMonth.total}</div>
   </div>
-  <div class="kpi-card c-green">
+  <div class="kpi-card c-green" onclick="scrollToDetail('completedMonth')">
     <div class="kpi-top"><div class="kpi-label">العملاء المنتهون في الشهر</div><div class="kpi-icon">✅</div></div>
     <div class="kpi-value" id="kv-completedMonth">${d.completedMonth.total}</div>
   </div>
-  <div class="kpi-card c-green">
+  <div class="kpi-card c-green" onclick="scrollToDetail('completed112')">
     <div class="kpi-top"><div class="kpi-label">المنتهون شغل مصر فقط</div><div class="kpi-icon">🇪🇬</div></div>
     <div class="kpi-value" id="kv-completed112">${d.completed112.total}</div>
   </div>
 
-  <div class="kpi-card c-red">
+  <div class="kpi-card c-red" onclick="scrollToDetail('overDue')">
     <div class="kpi-top"><div class="kpi-label">التأخير في الأوفر فيو</div><div class="kpi-icon">⏰</div></div>
     <div class="kpi-value" id="kv-overDue">${d.overDue.total}</div>
   </div>
-  <div class="kpi-card c-red">
+  <div class="kpi-card c-red" onclick="scrollToDetail('sijilDelay')">
     <div class="kpi-top"><div class="kpi-label">تأخير تسليم السجل التجاري</div><div class="kpi-icon">🗂️</div></div>
     <div class="kpi-value" id="kv-sijilDelay">${d.sijilDelay.total}</div>
   </div>
-  <div class="kpi-card c-green">
+  <div class="kpi-card c-green" onclick="scrollToDetail('sijilAmer')">
     <div class="kpi-top"><div class="kpi-label">السجل جاهز وامريكا مفتوحة</div><div class="kpi-icon">🌐</div></div>
     <div class="kpi-value" id="kv-sijilAmer">${d.sijilAmer.total}</div>
   </div>
