@@ -1,10 +1,10 @@
 {
   "metrics": {
     "p2": 46,
-    "p3": 51,
+    "p3": 50,
     "recv": 44,
     "coll": 26,
-    "licMonth": 54,
+    "licMonth": 53,
     "sijilSaudi": 111,
     "clientApproval": 55,
     "overDue": 1,
@@ -22,12 +22,7 @@
     "pola ellwaa": 58,
     "Esraa Ellwaa": 14
   },
-  "amOnHold": {
-    "pola ellwaa": 2,
-    "Esraa Ellwaa": 6,
-    "fatema ellwaa": 8,
-    "Jenna Ellwaa": 5
-  },
+  "amOnHold": {},
   "sampleMilestones": [
     {
       "end_date": "08-06-2026",
@@ -408,5 +403,5 @@
       }
     }
   ],
-  "ts": "2026-07-21T09:54:59.422Z"
+  "ts": "2026-07-21T10:13:18.437Z"
 }
