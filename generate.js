@@ -72,42 +72,23 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// ── Project list (v2 returns all ~892 projects incl. Completed) ───────────────
+// ── Project list via v3 (returns active projects with custom status) ──────────
 async function getAllProjects(token) {
   const out = [];
   let index = 1;
   while (true) {
-    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?index=${index}&range=100`);
-    const batch = res.projects || [];
-    out.push(...batch);
+    const res = await zohoGet(token, `/api/v3/portal/${PORTAL_ID}/projects/?index=${index}&range=100`);
+    // v3 raw API returns {data: {result: [...]}} — not {projects: [...]}
+    const batch = res.data?.result || res.projects || [];
+    // Normalize: ensure id_string exists (v3 uses "id", v2 uses "id_string")
+    const normalized = batch.map(p => ({ ...p, id_string: p.id_string || p.id || '' }));
+    out.push(...normalized);
     console.log(`  projects page: got ${batch.length} (total so far: ${out.length})`);
     if (batch.length < 100) break;
     index += 100;
   }
-  console.log(`✓ ${out.length} total projects from v2`);
+  console.log(`✓ ${out.length} total projects from v3`);
   return out;
-}
-
-// ── On-hold IDs from v3 (v2 returns custom status as "active" for all) ───────
-async function getOnHoldProjectIds(token) {
-  const onHoldIds = new Set();
-  let index = 1;
-  while (true) {
-    const res = await zohoGet(token, `/api/v3/portal/${PORTAL_ID}/projects/?index=${index}&range=100`);
-    const batch = (res.projects || res.data?.projects || []);
-    if (batch.length === 0) break;
-    for (const p of batch) {
-      const statusName = (p.status?.name || p.status || '').toLowerCase().replace(/[\s_]+/g, '');
-      if (statusName === 'onhold') {
-        onHoldIds.add(p.id_string || String(p.id || ''));
-      }
-    }
-    console.log(`  [v3 on-hold scan] index=${index} batch=${batch.length} on_hold_so_far=${onHoldIds.size}`);
-    if (batch.length < 100) break;
-    index += 100;
-  }
-  console.log(`✓ v3 on-hold IDs: ${onHoldIds.size}`);
-  return onHoldIds;
 }
 
 // ── Per-project data ──────────────────────────────────────────────────────────
@@ -153,6 +134,10 @@ async function getProjectData(token, project) {
 // ── Condition helpers ─────────────────────────────────────────────────────────
 const msStatus   = m => (m.status || '').toLowerCase();
 const isOpen     = t => (t.status?.name || '').toLowerCase() === 'open';
+const isOnHold   = p => {
+  const n = (p.status?.name || p.status || '');
+  return typeof n === 'string' && n.toLowerCase().replace(/[\s_]+/g, '') === 'onhold';
+};
 const isFinished = t => (t.status?.name || '').toLowerCase() === 'finished';
 const isOverdue  = t => isOpen(t) && t.end_date_long && t.end_date_long < Date.now();
 
@@ -182,21 +167,18 @@ async function main() {
   // Load project_ids.json (completed_this_month, completed_this_month_112 only — active/onhold now dynamic)
   const ids = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
 
-  // Get on-hold IDs from v3 (v2 doesn't return custom status)
-  const onHoldIdSet = await getOnHoldProjectIds(token);
-
-  // Active = AM-owned v2 projects NOT in on-hold set
-  const amOwnedProjects  = projects.filter(p => AM_MAP[ownerMap[p.id_string]]);
-  const activeOnlyProjects = amOwnedProjects.filter(p => !onHoldIdSet.has(p.id_string));
-  console.log(`✓ AM-owned: ${amOwnedProjects.length}  active: ${activeOnlyProjects.length}  on_hold: ${onHoldIdSet.size}`);
+  // v3 returns non-completed projects with real custom status — use isOnHold() directly
+  const amOwnedProjects    = projects.filter(p => AM_MAP[ownerMap[p.id_string]]);
+  const activeOnlyProjects = amOwnedProjects.filter(p => !isOnHold(p));
+  console.log(`✓ v3 total: ${projects.length}  AM-owned: ${amOwnedProjects.length}  active: ${activeOnlyProjects.length}  on_hold: ${amOwnedProjects.filter(isOnHold).length}`);
 
   // Count Active / OnHold per AM for the AM summary table
   const amActive = {};
   const amOnHold = {};
   for (const p of amOwnedProjects) {
     const owner = ownerMap[p.id_string];
-    if (onHoldIdSet.has(p.id_string)) amOnHold[owner] = (amOnHold[owner] || 0) + 1;
-    else                               amActive[owner] = (amActive[owner] || 0) + 1;
+    if (isOnHold(p)) amOnHold[owner] = (amOnHold[owner] || 0) + 1;
+    else             amActive[owner] = (amActive[owner] || 0) + 1;
   }
 
   // Metric buckets — all Active-only
@@ -270,9 +252,9 @@ async function main() {
     completedMonth: { total: ids.completed_this_month.length,    details: makeCompletedDetails(ids.completed_this_month) },
     completed112:   { total: ids.completed_this_month_112.length, details: makeCompletedDetails(ids.completed_this_month_112) },
     onHold: (() => {
-      const list = [...onHoldIdSet].map(pid => ({
-        name:  nameMap[pid] || pid,
-        owner: AM_MAP[ownerMap[pid]] || ownerMap[pid] || '—',
+      const list = projects.filter(isOnHold).map(p => ({
+        name:  nameMap[p.id_string] || p.name || p.id_string,
+        owner: AM_MAP[ownerMap[p.id_string]] || ownerMap[p.id_string] || '—',
       }));
       return { total: list.length, details: list };
     })(),
