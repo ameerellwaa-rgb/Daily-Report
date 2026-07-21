@@ -131,6 +131,12 @@ async function getProjectData(token, project) {
 // ── Condition helpers ─────────────────────────────────────────────────────────
 const msStatus   = m => (m.status || '').toLowerCase();
 const isOpen     = t => (t.status?.name || '').toLowerCase() === 'open';
+const isOnHold   = p => {
+  const s = p.status;
+  if (!s) return false;
+  const n = typeof s === 'string' ? s : (s.name || '');
+  return n.toLowerCase().replace(/[\s_]+/g, '') === 'onhold';
+};
 const isFinished = t => (t.status?.name || '').toLowerCase() === 'finished';
 const isOverdue  = t => isOpen(t) && t.end_date_long && t.end_date_long < Date.now();
 
@@ -160,7 +166,6 @@ async function main() {
   // Load project_ids.json (active_only, on_hold, completed_this_month, completed_this_month_112)
   const ids = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
   const activeOnlySet = new Set(ids.active_only);
-  const onHoldSet     = new Set(ids.on_hold);
 
   const activeOnlyProjects = projects.filter(p => activeOnlySet.has(p.id_string));
   console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}`);
@@ -172,7 +177,7 @@ async function main() {
     const owner = ownerMap[p.id_string];
     if (!owner || !AM_MAP[owner]) continue;
     if (activeOnlySet.has(p.id_string))  amActive[owner] = (amActive[owner] || 0) + 1;
-    else if (onHoldSet.has(p.id_string)) amOnHold[owner] = (amOnHold[owner] || 0) + 1;
+    else if (isOnHold(p))                amOnHold[owner] = (amOnHold[owner] || 0) + 1;
   }
 
   // Metric buckets — all Active-only
@@ -245,7 +250,13 @@ async function main() {
     ...Object.fromEntries(METRIC_KEYS.map(k => [k, summarize(B[k])])),
     completedMonth: { total: ids.completed_this_month.length,    details: makeCompletedDetails(ids.completed_this_month) },
     completed112:   { total: ids.completed_this_month_112.length, details: makeCompletedDetails(ids.completed_this_month_112) },
-    onHold:         { total: ids.on_hold.length,                  details: makeCompletedDetails(ids.on_hold) },
+    onHold: (() => {
+      const list = projects.filter(isOnHold).map(p => ({
+        name:  nameMap[p.id_string] || p.name || p.id_string,
+        owner: AM_MAP[ownerMap[p.id_string]] || ownerMap[p.id_string] || '—',
+      }));
+      return { total: list.length, details: list };
+    })(),
     amData: { active: amActive, onHold: amOnHold },
     updatedAt: new Date().toLocaleString('ar-EG', {
       timeZone:'Africa/Cairo', weekday:'long', year:'numeric',
