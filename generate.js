@@ -802,6 +802,8 @@ function renderDetails(metrics, details) {
 function renderP1Delayed(details, total) {
   const badge = document.getElementById('db-p1Delayed');
   if (badge) badge.textContent = total ?? 0;
+  const kv = document.getElementById('kv-p1Delayed');
+  if (kv) kv.textContent = total ?? 0;
   const tbody = document.getElementById('dtb-p1Delayed');
   if (!tbody) return;
   const rows = details || [];
@@ -953,32 +955,14 @@ window.addEventListener('DOMContentLoaded', initHistory);
   <select id="hist-select" onchange="histSelect(this.value)"><option value="-1">اليوم</option></select>
 </div>
 
-<div class="sec-head"><h2>الدفعة الأولى المتأخرة</h2><div class="sec-line"></div></div>
-<div class="detail-block" id="detail-block-p1Delayed" style="margin-bottom:16px">
-  <div class="detail-head">
-    <div style="display:flex;align-items:center;gap:10px">
-      <span id="db-p1Delayed" class="badge b-red" style="font-size:14px;padding:4px 14px;min-width:38px">${d.p1Delayed.total}</span>
-      <h3 style="font-size:13px;font-weight:700;color:var(--text)">الدفعة الأولى المتأخرة</h3>
-    </div>
-    <button class="dl-btn" onclick="dlCSVP1('الدفعة الأولى المتأخرة')">⬇ Excel</button>
-  </div>
-  <div class="detail-scroll" style="max-height:420px">
-    <table>
-      <thead><tr>
-        <th style="width:36px">#</th>
-        <th style="text-align:right">اسم المشروع</th>
-        <th>المسؤول</th>
-        <th>طريقة الدفع</th>
-        <th>الدفعة الأولى</th>
-        <th>الضريبة</th>
-        <th style="color:var(--red)">المتبقي</th>
-      </tr></thead>
-      <tbody id="dtb-p1Delayed">${p1DelayedRows}</tbody>
-    </table>
-  </div>
-</div>
-
 <div class="kpi-grid">
+  <div class="kpi-card c-red" style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;padding:16px 28px" onclick="scrollToDetail('p1Delayed')">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="kpi-icon">💳</div>
+      <span style="font-size:15px;font-weight:700;color:var(--text)">الدفعة الأولى المتأخرة</span>
+    </div>
+    <div class="kpi-value" id="kv-p1Delayed" style="font-size:56px">${d.p1Delayed.total}</div>
+  </div>
   <div class="kpi-card c-gold" onclick="scrollToDetail('onHold')">
     <div class="kpi-top"><div class="kpi-label">عملاء أون هولد</div><div class="kpi-icon">⏸️</div></div>
     <div class="kpi-value" id="kv-onHold">${d.onHold.total}</div>
@@ -1046,6 +1030,29 @@ window.addEventListener('DOMContentLoaded', initHistory);
 
 <div class="sec-head"><h2>التفاصيل والتصدير</h2><div class="sec-line"></div></div>
 <div class="detail-grid">
+<div class="detail-block" id="detail-block-p1Delayed" style="grid-column:1/-1">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="db-p1Delayed" class="badge b-red" style="font-size:14px;padding:4px 14px;min-width:38px">${d.p1Delayed.total}</span>
+      <h3 style="font-size:13px;font-weight:700;color:var(--text)">الدفعة الأولى المتأخرة</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSVP1('الدفعة الأولى المتأخرة')">⬇ Excel</button>
+  </div>
+  <div class="detail-scroll" style="max-height:420px">
+    <table>
+      <thead><tr>
+        <th style="width:36px">#</th>
+        <th style="text-align:right">اسم المشروع</th>
+        <th>المسؤول</th>
+        <th>طريقة الدفع</th>
+        <th>الدفعة الأولى</th>
+        <th>الضريبة</th>
+        <th style="color:var(--red)">المتبقي</th>
+      </tr></thead>
+      <tbody id="dtb-p1Delayed">${p1DelayedRows}</tbody>
+    </table>
+  </div>
+</div>
 ${detailSections}
 </div>
 
