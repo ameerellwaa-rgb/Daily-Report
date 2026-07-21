@@ -6,6 +6,7 @@ const CLIENT_ID     = process.env.ZOHO_CLIENT_ID;
 const CLIENT_SECRET = process.env.ZOHO_CLIENT_SECRET;
 const REFRESH_TOKEN = process.env.ZOHO_REFRESH_TOKEN;
 const PORTAL_ID     = '896030705';
+const SHEET_ID      = '11P7XJlm19FMGwgEv5OvyETpjK8qef-Vt6amrCru9bKY';
 
 const AM_MAP = {
   'Esraa Ellwaa':    'إسراء',
@@ -39,6 +40,51 @@ function httpGet(url, headers) {
       res.on('end', () => { try { resolve(JSON.parse(body)); } catch { reject(new Error(body.slice(0,300))); } });
     }).on('error', reject);
   });
+}
+
+function httpGetText(url, maxRedirects = 5) {
+  return new Promise((resolve, reject) => {
+    https.get(url, res => {
+      if ([301,302,307,308].includes(res.statusCode) && res.headers.location && maxRedirects > 0) {
+        return resolve(httpGetText(res.headers.location, maxRedirects - 1));
+      }
+      let body = '';
+      res.on('data', c => body += c);
+      res.on('end', () => resolve(body));
+    }).on('error', reject);
+  });
+}
+
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  for (const line of lines) {
+    if (!line.trim()) continue;
+    const cells = [];
+    let i = 0;
+    while (i <= line.length) {
+      if (i === line.length) { cells.push(''); break; }
+      if (line[i] === '"') {
+        let j = i + 1, val = '';
+        while (j < line.length) {
+          if (line[j] === '"') {
+            if (j+1 < line.length && line[j+1] === '"') { val += '"'; j += 2; }
+            else { j++; break; }
+          } else { val += line[j++]; }
+        }
+        cells.push(val);
+        if (j < line.length && line[j] === ',') j++;
+        i = j;
+      } else {
+        const end = line.indexOf(',', i);
+        const to  = end === -1 ? line.length : end;
+        cells.push(line.slice(i, to));
+        i = to + 1;
+      }
+    }
+    rows.push(cells);
+  }
+  return rows;
 }
 
 // ── Rate-limit-aware request wrapper ─────────────────────────────────────────
@@ -114,6 +160,35 @@ async function getCompletedThisMonth(token) {
   }
   console.log(`✓ ${completed.length} projects completed in ${thisMonth}`);
   return completed;
+}
+
+// ── Google Sheet: الدفعة الأولى المتأخرة ─────────────────────────────────────
+async function getP1Delayed() {
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+    const text = await httpGetText(url);
+    const rows = parseCSV(text);
+    const result = [];
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.length < 11) continue;
+      const theRest = parseFloat((row[10] || '0').replace(/,/g, '')) || 0;
+      if (theRest === 0) continue;
+      result.push({
+        name:          row[1] || '',
+        owner:         row[2] || '',
+        paymentMethod: row[5] || '',
+        first:         parseFloat((row[6] || '0').replace(/,/g, '')) || 0,
+        tax:           parseFloat((row[7] || '0').replace(/,/g, '')) || 0,
+        theRest,
+      });
+    }
+    console.log(`✓ ${result.length} P1 delayed from Google Sheet`);
+    return result;
+  } catch (e) {
+    console.error('getP1Delayed error:', e.message);
+    return [];
+  }
 }
 
 // ── Per-project data ──────────────────────────────────────────────────────────
@@ -196,6 +271,9 @@ async function main() {
 
   // Get completed-this-month projects from v3 API
   const completedThisMonthIds = await getCompletedThisMonth(token);
+
+  // Get P1 delayed from Google Sheet
+  const p1Delayed = await getP1Delayed();
   const is112 = name => /-112-/i.test(name || '');
   const completed112Ids   = completedThisMonthIds.filter(pid => is112(nameMap[pid] || pid));
   const completedMonthIds = completedThisMonthIds.filter(pid => !is112(nameMap[pid] || pid));
@@ -303,6 +381,7 @@ async function main() {
     ...Object.fromEntries(METRIC_KEYS.map(k => [k, summarize(B[k])])),
     completedMonth: { total: completedMonthIds.length,  details: makeCompletedDetails(completedMonthIds) },
     completed112:   { total: completed112Ids.length,    details: makeCompletedDetails(completed112Ids) },
+    p1Delayed:      { total: p1Delayed.length, details: p1Delayed },
     onHold: (() => {
       const list = [...onHoldSet].map(pid => ({
         name:  nameMap[pid] || pid,
@@ -334,9 +413,9 @@ async function main() {
   const histEntry = {
     date:      dateKey,
     updatedAt: data.updatedAt,
-    metrics:   Object.fromEntries(ALL_KEYS.map(k => [k, data[k].total])),
+    metrics:   { ...Object.fromEntries(ALL_KEYS.map(k => [k, data[k].total])), p1Delayed: data.p1Delayed.total },
     amData:    data.amData,
-    details:   Object.fromEntries(ALL_KEYS.map(k => [k, data[k].details])),
+    details:   { ...Object.fromEntries(ALL_KEYS.map(k => [k, data[k].details])), p1Delayed: data.p1Delayed.details },
   };
   fs.writeFileSync(`history/${dateKey}.json`, JSON.stringify(histEntry));
 
@@ -459,6 +538,17 @@ function buildHTML(d) {
     )
   ).replace(/<\/script>/gi, '<\\/script>')
    .replace(/[^\x00-\x7F]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
+
+  const p1DJson = JSON.stringify(d.p1Delayed.details)
+    .replace(/<\/script>/gi, '<\\/script>')
+    .replace(/[^\x00-\x7F]/g, c => '\\u' + c.charCodeAt(0).toString(16).padStart(4, '0'));
+
+  const fmtN = n => Math.round(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const p1DelayedRows = d.p1Delayed.details.length === 0
+    ? `<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px 0">لا توجد بيانات</td></tr>`
+    : d.p1Delayed.details.map((item, i) =>
+        `<tr><td style="color:var(--text-dim);width:36px">${i+1}</td><td style="text-align:right">${item.name}</td><td>${item.owner}</td><td>${item.paymentMethod}</td><td style="direction:ltr;font-variant-numeric:tabular-nums">${fmtN(item.first)}</td><td style="direction:ltr;font-variant-numeric:tabular-nums">${fmtN(item.tax)}</td><td style="direction:ltr;font-variant-numeric:tabular-nums;color:var(--red)">${fmtN(item.theRest)}</td></tr>`
+      ).join('');
 
   // AM summary table rows
   const amRows = AM_ORDER.map(amEn => {
@@ -616,10 +706,29 @@ const _M   = ${JSON.stringify(Object.fromEntries(
 const _A   = ${JSON.stringify(d.amData)};
 const _TODAY = '${d.dateKey}';
 let   _Dcur = _D;
+const _P1D = ${p1DJson};
 
 const AM_ORDER_AR = ${JSON.stringify(AM_ORDER.map(e => ({ en: e, ar: AM_MAP[e] })))};
 
 // ── CSV download ──────────────────────────────────────────────────────────────
+function dlCSVP1(label) {
+  const rows = _P1D;
+  const bom  = String.fromCharCode(0xFEFF);
+  const hdr  = 'اسم المشروع,المسؤول,طريقة الدفع,الدفعة الأولى,الضريبة,المتبقي\\n';
+  const body = rows.map(r =>
+    '"' + (r.name||'').replace(/"/g,'""') + '",' +
+    '"' + (r.owner||'').replace(/"/g,'""') + '",' +
+    '"' + (r.paymentMethod||'').replace(/"/g,'""') + '",' +
+    (r.first||0) + ',' + (r.tax||0) + ',' + (r.theRest||0)
+  ).join('\\n');
+  const blob = new Blob([bom + hdr + body], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = label + '.csv';
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
 function dlCSV(key, label) {
   const rows = _Dcur[key] || [];
   const bom  = String.fromCharCode(0xFEFF);
@@ -689,6 +798,31 @@ function renderDetails(metrics, details) {
   });
 }
 
+// ── P1 Delayed render ─────────────────────────────────────────────────────────
+function renderP1Delayed(details, total) {
+  const badge = document.getElementById('db-p1Delayed');
+  if (badge) badge.textContent = total ?? 0;
+  const tbody = document.getElementById('dtb-p1Delayed');
+  if (!tbody) return;
+  const rows = details || [];
+  const fmtN = n => Math.round(n||0).toString().replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  if (rows.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-dim);padding:20px 0">لا توجد بيانات</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map((r,i) =>
+      '<tr>' +
+      '<td style="color:var(--text-dim);width:36px">' + (i+1) + '</td>' +
+      '<td style="text-align:right">' + (r.name||'') + '</td>' +
+      '<td>' + (r.owner||'') + '</td>' +
+      '<td>' + (r.paymentMethod||'') + '</td>' +
+      '<td style="direction:ltr;font-variant-numeric:tabular-nums">' + fmtN(r.first) + '</td>' +
+      '<td style="direction:ltr;font-variant-numeric:tabular-nums">' + fmtN(r.tax) + '</td>' +
+      '<td style="direction:ltr;font-variant-numeric:tabular-nums;color:var(--red)">' + fmtN(r.theRest) + '</td>' +
+      '</tr>'
+    ).join('');
+  }
+}
+
 // ── History navigation ────────────────────────────────────────────────────────
 let _histIndex = [];
 let _histPos   = -1; // -1 = today
@@ -734,6 +868,7 @@ async function loadHistPos(pos) {
   if (pos === -1) {
     _Dcur = _D;
     renderKPIs(_M); renderAM(_A); renderDetails(_M, _D);
+    renderP1Delayed(_P1D, _P1D.length);
     document.getElementById('upd-at').textContent = '${d.updatedAt}';
     updateHistNav(); return;
   }
@@ -744,6 +879,7 @@ async function loadHistPos(pos) {
     const h = await r.json();
     _Dcur = h.details || {};
     renderKPIs(h.metrics || {}); renderAM(h.amData || {active:{},onHold:{}}); renderDetails(h.metrics || {}, h.details || {});
+    renderP1Delayed((h.details || {}).p1Delayed, (h.metrics || {}).p1Delayed);
     document.getElementById('upd-at').textContent = h.updatedAt || dateStr;
   } catch { console.error('failed to load history', dateStr); }
   updateHistNav();
@@ -815,6 +951,31 @@ window.addEventListener('DOMContentLoaded', initHistory);
   <button class="hist-btn" id="hist-next" onclick="histNav(-1)" title="يوم تالٍ" disabled>▶</button>
   <span class="hist-tag tag-live" id="hist-tag">مباشر</span>
   <select id="hist-select" onchange="histSelect(this.value)"><option value="-1">اليوم</option></select>
+</div>
+
+<div class="sec-head"><h2>الدفعة الأولى المتأخرة</h2><div class="sec-line"></div></div>
+<div class="detail-block" id="detail-block-p1Delayed" style="margin-bottom:16px">
+  <div class="detail-head">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span id="db-p1Delayed" class="badge b-red" style="font-size:14px;padding:4px 14px;min-width:38px">${d.p1Delayed.total}</span>
+      <h3 style="font-size:13px;font-weight:700;color:var(--text)">الدفعة الأولى المتأخرة</h3>
+    </div>
+    <button class="dl-btn" onclick="dlCSVP1('الدفعة الأولى المتأخرة')">⬇ Excel</button>
+  </div>
+  <div class="detail-scroll" style="max-height:420px">
+    <table>
+      <thead><tr>
+        <th style="width:36px">#</th>
+        <th style="text-align:right">اسم المشروع</th>
+        <th>المسؤول</th>
+        <th>طريقة الدفع</th>
+        <th>الدفعة الأولى</th>
+        <th>الضريبة</th>
+        <th style="color:var(--red)">المتبقي</th>
+      </tr></thead>
+      <tbody id="dtb-p1Delayed">${p1DelayedRows}</tbody>
+    </table>
+  </div>
 </div>
 
 <div class="kpi-grid">
