@@ -45,7 +45,7 @@ function httpGet(url, headers) {
 let reqCount = 0;
 let windowStart = Date.now();
 
-async function zohoGet(token, path) {
+async function zohoGet(token, path, v3 = false) {
   const now = Date.now();
   const elapsed = now - windowStart;
   if (elapsed >= 120000) { reqCount = 0; windowStart = Date.now(); }
@@ -57,8 +57,9 @@ async function zohoGet(token, path) {
     windowStart = Date.now();
   }
   reqCount++;
+  const base = v3 ? 'https://projectsapi.zoho.com' : 'https://projectsapi.zoho.com/restapi';
   return httpGet(
-    `https://projectsapi.zoho.com/restapi${path}`,
+    `${base}${path}`,
     { Authorization: `Zoho-oauthtoken ${token}` }
   ).catch(e => { console.error('GET error:', path, e.message); return {}; });
 }
@@ -86,6 +87,33 @@ async function getAllProjects(token) {
   }
   console.log(`✓ ${out.length} total projects from v2`);
   return out;
+}
+
+// ── Completed-this-month projects (v3 API) ────────────────────────────────────
+async function getCompletedThisMonth(token) {
+  const now = new Date();
+  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const completed = [];
+  let index = 1;
+  while (true) {
+    const res = await zohoGet(token, `/api/v3/portal/${PORTAL_ID}/projects/?index=${index}&range=200`, true);
+    const batch = res.data?.result || res.projects || [];
+    if (batch.length === 0) break;
+    for (const p of batch) {
+      if (
+        p.status?.name === 'Completed' &&
+        p.completed_time &&
+        p.completed_time.startsWith(thisMonth) &&
+        !EXCLUDE.has(p.owner?.name || '')
+      ) {
+        completed.push(p.id || p.id_string);
+      }
+    }
+    if (batch.length < 200) break;
+    index += 200;
+  }
+  console.log(`✓ ${completed.length} projects completed in ${thisMonth}`);
+  return completed;
 }
 
 // ── Per-project data ──────────────────────────────────────────────────────────
@@ -161,13 +189,19 @@ async function main() {
     nameMap[p.id_string]  = p.name || p.id_string;
   }
 
-  // Load project_ids.json (active_only, on_hold, completed_this_month, completed_this_month_112)
+  // Load project_ids.json (active_only and on_hold only; completed comes from v3 dynamically)
   const ids = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
   const activeOnlySet = new Set(ids.active_only);
   const onHoldSet     = new Set(ids.on_hold);
 
+  // Get completed-this-month projects from v3 API
+  const completedThisMonthIds = await getCompletedThisMonth(token);
+  const is112 = name => /-112-/i.test(name || '');
+  const completed112Ids   = completedThisMonthIds.filter(pid => is112(nameMap[pid] || pid));
+  const completedMonthIds = completedThisMonthIds.filter(pid => !is112(nameMap[pid] || pid));
+
   const activeOnlyProjects = projects.filter(p => activeOnlySet.has(p.id_string));
-  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}`);
+  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}  completed_month: ${completedThisMonthIds.length} (112: ${completed112Ids.length})`);
 
   // Count Active / OnHold per AM for the AM summary table
   const amActive = {};
@@ -224,7 +258,27 @@ async function main() {
     if (processed % 50 === 0) console.log(`  ${processed} / ${activeOnlyProjects.length} processed`);
   }
 
-  console.log(`✓ ${processed} projects analyzed`);
+  console.log(`✓ ${processed} active projects analyzed`);
+
+  // Secondary loop: check completed-this-month projects for licMonth only
+  console.log(`Checking ${completedThisMonthIds.length} completed projects for licMonth...`);
+  for (const pid of completedThisMonthIds) {
+    if (B.licMonth[pid]) continue; // already counted (shouldn't happen, but safe)
+    const project = projects.find(p => p.id_string === pid);
+    if (!project) continue;
+    const tasks = [];
+    let taskIdx = 1;
+    while (true) {
+      const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all&index=${taskIdx}&range=100`);
+      const batch = res.tasks || [];
+      tasks.push(...batch);
+      if (batch.length < 100) break;
+      taskIdx += 100;
+    }
+    const licThisMonth = findTask(tasks, 'صدور الترخيص', t => isFinished(t) && isThisMonth(t, now));
+    if (licThisMonth) B.licMonth[pid] = ownerMap[pid];
+  }
+  console.log(`✓ licMonth total: ${Object.keys(B.licMonth).length}`);
 
   function summarize(bucket) {
     const byManager = {};
@@ -247,8 +301,8 @@ async function main() {
 
   const data = {
     ...Object.fromEntries(METRIC_KEYS.map(k => [k, summarize(B[k])])),
-    completedMonth: { total: ids.completed_this_month.length,    details: makeCompletedDetails(ids.completed_this_month) },
-    completed112:   { total: ids.completed_this_month_112.length, details: makeCompletedDetails(ids.completed_this_month_112) },
+    completedMonth: { total: completedMonthIds.length,  details: makeCompletedDetails(completedMonthIds) },
+    completed112:   { total: completed112Ids.length,    details: makeCompletedDetails(completed112Ids) },
     onHold: (() => {
       const list = [...onHoldSet].map(pid => ({
         name:  nameMap[pid] || pid,
