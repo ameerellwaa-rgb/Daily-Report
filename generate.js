@@ -636,7 +636,11 @@ async function initHistory() {
     const sel = document.getElementById('hist-select');
     if (sel) sel.innerHTML =
       '<option value="-1">اليوم</option>' +
-      _histIndex.map((d,i) => '<option value="' + i + '">' + d + '</option>').join('');
+      _histIndex
+        .map((d,i) => ({ d, i }))
+        .filter(({ d }) => d !== _TODAY)
+        .map(({ d, i }) => '<option value="' + i + '">' + d + '</option>')
+        .join('');
   } catch {}
   updateHistNav();
 }
