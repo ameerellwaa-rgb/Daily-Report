@@ -143,7 +143,8 @@ async function getCompletedThisMonth(token) {
   let index = 1;
   while (true) {
     const res = await zohoGet(token, `/api/v3/portal/${PORTAL_ID}/projects/?index=${index}&range=200`, true);
-    const batch = res.data?.result || res.projects || [];
+    if (index === 1) console.log('[v3 debug] keys:', Object.keys(res || {}).join(','), '| data keys:', Object.keys(res?.data || {}).join(','), '| sample:', JSON.stringify(res).slice(0, 300));
+    const batch = res.data?.result || res.data?.projects || res.projects || res.result || [];
     if (batch.length === 0) break;
     for (const p of batch) {
       if (
