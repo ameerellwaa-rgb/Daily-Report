@@ -215,12 +215,29 @@ async function getP1Delayed() {
 
 // ── Per-project data ──────────────────────────────────────────────────────────
 const _debugSamples = { milestones: [], tasks: [] };
-
 let _diagLicCount = 0;
+let taskCache  = {};
+let cacheHits  = 0;
+let cacheMisses = 0;
 
+// Cache entry keys:
+//   u   — project.last_updated_time_long (invalidation key)
+//   lic — null=not finished, 0=finished/no-timestamp, N=finished timestamp
+//   rv  — استلام open, co — جمع open, ap — موافقة open, am — امريكا open
+//   sj  — sijil finished, sjE — sijil end_date_long if open, ovE — overview end_date_long if open
+//   m2/m3 — milestone status string (null if milestone doesn't exist)
 async function getProjectData(token, project) {
-  const pid = project.id_string;
+  const pid   = project.id_string;
+  const utime = project.last_updated_time_long || 0;
 
+  const cached = taskCache[pid];
+  if (cached && cached.u === utime) {
+    cacheHits++;
+    return cached;
+  }
+  cacheMisses++;
+
+  // ── Milestones ──
   const msRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/milestones/`);
   const milestones = msRes.milestones || [];
 
@@ -229,7 +246,7 @@ async function getProjectData(token, project) {
     if (d) _debugSamples.milestones.push(d);
   }
 
-  // Paginate all tasks — ?status=all includes "finished" (a custom type, not "open" or "closed")
+  // ── Tasks ──
   const tasks = [];
   let taskIdx = 1;
   while (true) {
@@ -243,14 +260,36 @@ async function getProjectData(token, project) {
   if (_debugSamples.tasks.length < 2 && tasks.length > 0) {
     _debugSamples.tasks.push(tasks[0]);
   }
-  // Debug: log first few صدور الترخيص findings
   const licTask = tasks.find(t => t.name === 'صدور الترخيص');
   if (licTask && _diagLicCount < 5) {
     _diagLicCount++;
     console.log(`  [diag] pid=${pid} licTask status="${licTask.status?.name}" type="${licTask.status?.type}"`);
   }
 
-  return { tasks, milestones };
+  // ── Compute derived metrics and cache ──
+  const st       = t => (t.status?.name || '').toLowerCase();
+  const licFin   = licTask && st(licTask) === 'finished';
+  const sijilOpen = tasks.find(t => (t.name || '').includes('تسليم نسخة من السجل التجارى') && st(t) === 'open');
+  const ovOpen    = tasks.find(t => (t.name || '').includes('عمل الاوفر فيو')                && st(t) === 'open');
+  const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
+  const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
+
+  const entry = {
+    u:   utime,
+    lic: licFin ? (licTask.completed_time_long || 0) : null,
+    rv:  tasks.some(t => t.name === 'استلام بيانات الترخيص'        && st(t) === 'open'),
+    co:  tasks.some(t => t.name === 'جمع بيانات الترخيص'            && st(t) === 'open'),
+    ap:  tasks.some(t => t.name === 'موافقة العميل على الاوفر فيو'  && st(t) === 'open'),
+    am:  tasks.some(t => (t.name || '').includes('عمل شركة  امريكا') && st(t) === 'open'),
+    sj:  tasks.some(t => (t.name || '').includes('تسليم نسخة من السجل التجارى') && st(t) === 'finished'),
+    sjE: sijilOpen ? (sijilOpen.end_date_long || null) : null,
+    ovE: ovOpen    ? (ovOpen.end_date_long    || null) : null,
+    m2:  m2 ? (m2.status || '').toLowerCase() : null,
+    m3:  m3 ? (m3.status || '').toLowerCase() : null,
+  };
+
+  taskCache[pid] = entry;
+  return entry;
 }
 
 // ── Condition helpers ─────────────────────────────────────────────────────────
@@ -269,11 +308,26 @@ function isThisMonth(t, now) {
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
 
+function isThisMonthMs(ms, now) {
+  if (!ms) return false;
+  const d = new Date(ms);
+  return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+}
+
 const findTask     = (tasks, name, pred)   => tasks.some(t => t.name === name && pred(t));
 const findTaskLike = (tasks, substr, pred) => tasks.some(t => (t.name || '').includes(substr) && pred(t));
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
+  // Load task cache (reduces ~187 API calls to ~20-40 on repeat runs)
+  try {
+    taskCache = JSON.parse(fs.readFileSync('task_cache.json', 'utf8'));
+    console.log(`✓ Loaded task_cache.json (${Object.keys(taskCache).length} entries)`);
+  } catch {
+    taskCache = {};
+    console.log('  task_cache.json not found — starting fresh');
+  }
+
   const token    = await getAccessToken();
   const projects = await getAllProjects(token);
 
@@ -327,32 +381,24 @@ async function main() {
     const pid   = project.id_string;
     const owner = ownerMap[pid];
 
-    const { tasks, milestones } = await getProjectData(token, project);
+    const e     = await getProjectData(token, project);
+    const nowMs = Date.now();
 
-    const licDone       = findTask(tasks,     'صدور الترخيص',                    isFinished);
-    const licThisMonth  = findTask(tasks,     'صدور الترخيص',                    t => isFinished(t) && isThisMonth(t, now));
-    const recvOpen      = findTask(tasks,     'استلام بيانات الترخيص',            isOpen);
-    const collOpen      = findTask(tasks,     'جمع بيانات الترخيص',               isOpen);
-    const approvalOpen  = findTask(tasks,     'موافقة العميل على الاوفر فيو',     isOpen);
-    const amerOpen      = findTaskLike(tasks, 'عمل شركة  امريكا',                 isOpen);  // double space
-    const sijilDone     = findTaskLike(tasks, 'تسليم نسخة من السجل التجارى',      isFinished);
-    const sijilOvr      = findTaskLike(tasks, 'تسليم نسخة من السجل التجارى',      isOverdue);
-    const overviewOvr   = findTaskLike(tasks, 'عمل الاوفر فيو',                   isOverdue);
+    const licThisMonth = e.lic > 0 && isThisMonthMs(e.lic, now);
+    const sijilOvr     = e.sjE !== null && e.sjE < nowMs;
+    const overviewOvr  = e.ovE !== null && e.ovE < nowMs;
 
-    const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
-    const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
-
-    if (licDone && m2 && msStatus(m2) !== 'completed')                         B.p2[pid]            = owner;
-    if (m2 && msStatus(m2) === 'completed' && m3 && msStatus(m3) !== 'completed') B.p3[pid]         = owner;
-    if (recvOpen)                                                               B.recv[pid]          = owner;
-    if (collOpen && recvOpen)                                                   B.coll[pid]          = owner;
-    if (licThisMonth)                                                           B.licMonth[pid]      = owner;
-    if (sijilDone)                                                              B.sijilSaudi[pid]    = owner;
-    if (approvalOpen)                                                           B.clientApproval[pid]= owner;
-    if (overviewOvr)                                                            B.overDue[pid]       = owner;
-    if (sijilOvr)                                                               B.sijilDelay[pid]    = owner;
-    if (sijilDone && amerOpen)                                                  B.sijilAmer[pid]     = owner;
-    if (amerOpen)                                                               B.amer[pid]          = owner;
+    if (e.lic !== null && e.m2 !== null && e.m2 !== 'completed')              B.p2[pid]            = owner;
+    if (e.m2 === 'completed' && e.m3 !== null && e.m3 !== 'completed')        B.p3[pid]            = owner;
+    if (e.rv)                                                                  B.recv[pid]          = owner;
+    if (e.co && e.rv)                                                          B.coll[pid]          = owner;
+    if (licThisMonth)                                                          B.licMonth[pid]      = owner;
+    if (e.sj)                                                                  B.sijilSaudi[pid]    = owner;
+    if (e.ap)                                                                  B.clientApproval[pid]= owner;
+    if (overviewOvr)                                                           B.overDue[pid]       = owner;
+    if (sijilOvr)                                                              B.sijilDelay[pid]    = owner;
+    if (e.sj && e.am)                                                          B.sijilAmer[pid]     = owner;
+    if (e.am)                                                                  B.amer[pid]          = owner;
 
     processed++;
     if (processed % 50 === 0) console.log(`  ${processed} / ${activeOnlyProjects.length} processed`);
@@ -363,20 +409,11 @@ async function main() {
   // Secondary loop: check completed-this-month projects for licMonth only
   console.log(`Checking ${completedThisMonthIds.length} completed projects for licMonth...`);
   for (const pid of completedThisMonthIds) {
-    if (B.licMonth[pid]) continue; // already counted (shouldn't happen, but safe)
+    if (B.licMonth[pid]) continue;
     const project = projects.find(p => p.id_string === pid);
     if (!project) continue;
-    const tasks = [];
-    let taskIdx = 1;
-    while (true) {
-      const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all&index=${taskIdx}&range=100`);
-      const batch = res.tasks || [];
-      tasks.push(...batch);
-      if (batch.length < 100) break;
-      taskIdx += 100;
-    }
-    const licThisMonth = findTask(tasks, 'صدور الترخيص', t => isFinished(t) && isThisMonth(t, now));
-    if (licThisMonth) B.licMonth[pid] = ownerMap[pid];
+    const e = await getProjectData(token, project);
+    if (e.lic > 0 && isThisMonthMs(e.lic, now)) B.licMonth[pid] = ownerMap[pid];
   }
   console.log(`✓ licMonth total: ${Object.keys(B.licMonth).length}`);
 
@@ -450,12 +487,17 @@ async function main() {
   // Push history files directly to GitHub API (bypasses workflow git add restriction)
   await pushHistoryToGitHub(dateKey, histEntry, histIndex);
 
+  // Save updated task cache
+  fs.writeFileSync('task_cache.json', JSON.stringify(taskCache));
+  console.log(`✓ task_cache.json saved (${Object.keys(taskCache).length} entries; hits=${cacheHits} misses=${cacheMisses})`);
+
   fs.writeFileSync('index.html', buildHTML(data));
   console.log('✓ index.html written');
 
   fs.writeFileSync('debug.json', JSON.stringify({
     metrics: Object.fromEntries([...METRIC_KEYS,'completedMonth','completed112'].map(k => [k, data[k].total])),
     amActive, amOnHold,
+    cacheStats: { total: Object.keys(taskCache).length, hits: cacheHits, misses: cacheMisses },
     sampleMilestones: _debugSamples.milestones,
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
