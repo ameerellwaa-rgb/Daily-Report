@@ -131,54 +131,6 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// ── V3 web API probe ──────────────────────────────────────────────────────────
-async function probeV3API(token) {
-  const results = {};
-
-  // Test 1: v3 web API no filter — see what status field looks like
-  const r1 = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?per_page=5`, 'web');
-  results.noFilter = {
-    httpStatus: r1.status || null,
-    keys:       Object.keys(r1),
-    total:      r1.total_count || r1.total || null,
-    projCount:  (r1.projects || []).length,
-    statuses:   (r1.projects || []).map(p => ({ id: p.id_string, statusObj: p.status })),
-    error:      r1.error || null,
-  };
-
-  // Test 2: criteria filter — status = Completed (ID known from DevTools)
-  const completedCriteria = encodeURIComponent(JSON.stringify({
-    criteria: [{ criteria_condition: 'is', value: ['2533013000000020116'], cfid: '2533013000000020044' }],
-    pattern: '1',
-  }));
-  const r2 = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?per_page=5&criteria=${completedCriteria}`, 'web');
-  results.criteriaCompleted = {
-    keys:      Object.keys(r2),
-    total:     r2.total_count || r2.total || null,
-    projCount: (r2.projects || []).length,
-    samples:   (r2.projects || []).slice(0, 3).map(p => ({ id: p.id_string, name: p.name, status: p.status })),
-    error:     r2.error || null,
-  };
-
-  // Test 3: custom_view_id for "Completed + This Month" saved view
-  const r3 = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?per_page=5&custom_view_id=2533013000000061778`, 'web');
-  results.customView = {
-    keys:      Object.keys(r3),
-    total:     r3.total_count || r3.total || null,
-    projCount: (r3.projects || []).length,
-    error:     r3.error || null,
-  };
-
-  // Test 4: get project statuses list (cfid-based)
-  const r4 = await zohoGet(token, `/portal/${PORTAL_ID}/projectcustomfields/`, 'web');
-  results.customFields = {
-    keys:  Object.keys(r4),
-    error: r4.error || null,
-    sample: JSON.stringify(r4).slice(0, 500),
-  };
-
-  return results;
-}
 
 // ── Project list ──────────────────────────────────────────────────────────────
 async function getAllProjects(token) {
@@ -372,11 +324,9 @@ async function main() {
   }
 
   const token    = await getAccessToken();
-  const v3Probe = await probeV3API(token);
-  console.log('V3 probe:', JSON.stringify(v3Probe, null, 2));
   const projects = await getAllProjects(token);
 
-  // Build owner and name maps (all projects, including Completed)
+  // Build owner and name maps (all projects)
   const ownerMap = {};
   const nameMap  = {};
   for (const p of projects) {
@@ -385,10 +335,9 @@ async function main() {
     nameMap[p.id_string]  = p.name || p.id_string;
   }
 
-  // Load project_ids.json (active_only and on_hold only)
-  const ids = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
-  const activeOnlySet = new Set(ids.active_only);
-  const onHoldSet     = new Set(ids.on_hold);
+  // Load on_hold list from project_ids.json (active_only is no longer used)
+  const ids       = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
+  const onHoldSet = new Set(ids.on_hold);
 
   // Get P1 delayed from Google Sheet
   const p1Delayed = await getP1Delayed();
@@ -396,18 +345,32 @@ async function main() {
 
   const now = new Date();
 
-  const doneProjects       = projects.filter(p => !activeOnlySet.has(p.id_string) && !onHoldSet.has(p.id_string));
-  const activeOnlyProjects = projects.filter(p => activeOnlySet.has(p.id_string));
-  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}  done: ${doneProjects.length}`);
+  // Pre-pass: determine done vs active via الدفعة الثالثة milestone (cached, fast on repeat runs)
+  console.log(`Pre-pass: checking م3 milestone for ${projects.length - onHoldSet.size} non-hold projects...`);
+  const doneProjectIds  = new Set();
+  const projectMsMap    = {};
+  for (const p of projects) {
+    if (onHoldSet.has(p.id_string)) continue;
+    const ms = await getProjectM3(token, p);
+    projectMsMap[p.id_string] = ms;
+    if (ms.m3 === 'completed') doneProjectIds.add(p.id_string);
+  }
+
+  const doneProjects    = projects.filter(p => doneProjectIds.has(p.id_string));
+  const onHoldProjects  = projects.filter(p => onHoldSet.has(p.id_string));
+  const activeProjects  = projects.filter(p => !doneProjectIds.has(p.id_string) && !onHoldSet.has(p.id_string));
+  console.log(`✓ active: ${activeProjects.length}  on_hold: ${onHoldProjects.length}  done: ${doneProjects.length}`);
 
   // Count Active / OnHold per AM for the AM summary table
   const amActive = {};
   const amOnHold = {};
-  for (const p of projects) {
+  for (const p of activeProjects) {
     const owner = ownerMap[p.id_string];
-    if (!owner || !AM_MAP[owner]) continue;
-    if (activeOnlySet.has(p.id_string)) amActive[owner] = (amActive[owner] || 0) + 1;
-    else if (onHoldSet.has(p.id_string)) amOnHold[owner] = (amOnHold[owner] || 0) + 1;
+    if (owner && AM_MAP[owner]) amActive[owner] = (amActive[owner] || 0) + 1;
+  }
+  for (const p of onHoldProjects) {
+    const owner = ownerMap[p.id_string];
+    if (owner && AM_MAP[owner]) amOnHold[owner] = (amOnHold[owner] || 0) + 1;
   }
 
   // Metric buckets — all Active-only
@@ -421,7 +384,7 @@ async function main() {
   const completed112Ids   = [];
   let processed = 0;
 
-  for (const project of activeOnlyProjects) {
+  for (const project of activeProjects) {
     const pid   = project.id_string;
     const owner = ownerMap[pid];
 
@@ -449,17 +412,17 @@ async function main() {
     }
 
     processed++;
-    if (processed % 50 === 0) console.log(`  ${processed} / ${activeOnlyProjects.length} processed`);
+    if (processed % 50 === 0) console.log(`  ${processed} / ${activeProjects.length} processed`);
   }
 
   console.log(`✓ ${processed} active projects analyzed`);
 
-  // Secondary loop: ALL done projects — check الدفعة الثالثة milestone for completedMonth
-  console.log(`Checking ${doneProjects.length} done projects for completedMonth (milestone check)...`);
+  // Secondary loop: done projects — check if م3 completed this month (uses pre-pass cache, no extra API calls)
+  console.log(`Checking ${doneProjects.length} done projects for completedMonth...`);
   for (const project of doneProjects) {
     const pid = project.id_string;
-    const ms  = await getProjectM3(token, project);
-    if (ms.m3 === 'completed' && isThisMonthMs(ms.m3t, now)) {
+    const ms  = projectMsMap[pid];
+    if (ms && isThisMonthMs(ms.m3t, now)) {
       const full  = await getProjectData(token, project);
       const owner = ownerMap[pid] || '';
       if (is112(nameMap[pid] || pid)) completed112Ids.push(pid);
@@ -553,7 +516,6 @@ async function main() {
     amActive, amOnHold,
     cacheStats: { total: Object.keys(taskCache).length, hits: cacheHits, misses: cacheMisses },
     doneProjectsCount: doneProjects.length,
-    v3Probe,
     sampleMilestones: _debugSamples.milestones,
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
