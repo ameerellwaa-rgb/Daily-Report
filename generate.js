@@ -208,6 +208,7 @@ async function getP1Delayed() {
 const _debugSamples = { milestones: [], tasks: [] };
 
 let _diagLicCount = 0;
+let _taskErrLog = 0;
 
 async function getProjectData(token, project) {
   const pid = project.id_string;
@@ -225,6 +226,7 @@ async function getProjectData(token, project) {
   let taskIdx = 1;
   while (true) {
     const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/tasks/?status=all&index=${taskIdx}&range=100`);
+    if (!res.tasks && _taskErrLog < 3) { _taskErrLog++; console.log(`[task-err-${_taskErrLog}] pid=${pid}`, JSON.stringify(res).slice(0, 300)); }
     const batch = res.tasks || [];
     tasks.push(...batch);
     if (batch.length < 100) break;
