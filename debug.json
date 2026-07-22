@@ -1,11 +1,11 @@
 {
   "metrics": {
-    "p2": 45,
-    "p3": 52,
+    "p2": 42,
+    "p3": 49,
     "recv": 45,
     "coll": 25,
-    "licMonth": 51,
-    "sijilSaudi": 106,
+    "licMonth": 52,
+    "sijilSaudi": 107,
     "clientApproval": 57,
     "overDue": 1,
     "sijilDelay": 1,
@@ -33,54 +33,7 @@
     "hits": 0,
     "misses": 187
   },
-  "completedDebug": {
-    "distinctStatuses": [
-      "active"
-    ],
-    "totalCompleted": 0,
-    "samples": [],
-    "dateFieldDebug": []
-  },
-  "projectApiDebug": {
-    "status=completed": {
-      "count": 0,
-      "statuses": [],
-      "error": {
-        "code": 6891,
-        "message": "Given URL is wrong"
-      }
-    },
-    "status=Completed": {
-      "count": 0,
-      "statuses": [],
-      "error": {
-        "code": 6891,
-        "message": "Given URL is wrong"
-      }
-    },
-    "status=inactive": {
-      "count": 0,
-      "statuses": [],
-      "error": {
-        "code": 6891,
-        "message": "Given URL is wrong"
-      }
-    },
-    "status=all": {
-      "count": 0,
-      "statuses": [],
-      "error": {
-        "code": 6891,
-        "message": "Given URL is wrong"
-      }
-    },
-    "action=allprojects": {
-      "count": 5,
-      "statuses": [
-        "active"
-      ]
-    }
-  },
+  "recentlyDoneCount": 0,
   "sampleMilestones": [
     {
       "end_date": "08-10-2026",
@@ -461,5 +414,5 @@
       }
     }
   ],
-  "ts": "2026-07-22T10:17:44.872Z"
+  "ts": "2026-07-22T11:06:13.376Z"
 }
