@@ -132,6 +132,32 @@ async function getAccessToken() {
 }
 
 
+// ── Status IDs (from DevTools inspection) ────────────────────────────────────
+const STATUS_CFID      = '2533013000000020044';
+const STATUS_ON_HOLD   = '2533013000000020104';
+const STATUS_COMPLETED = '2533013000000020116';
+
+async function getProjectsByStatus(token, statusId) {
+  const out = [];
+  let index = 1;
+  const criteria = encodeURIComponent(JSON.stringify({
+    criteria: [{ criteria_condition: 'is', value: [statusId], cfid: STATUS_CFID }],
+    pattern: '1',
+  }));
+  while (true) {
+    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?criteria=${criteria}&index=${index}&range=100`);
+    if (res.error) {
+      console.log(`  [criteria] error for statusId=${statusId}:`, res.error.title || JSON.stringify(res.error).slice(0,200));
+      return null;
+    }
+    const batch = res.projects || [];
+    out.push(...batch);
+    if (batch.length < 100) break;
+    index += 100;
+  }
+  return out;
+}
+
 // ── Project list ──────────────────────────────────────────────────────────────
 async function getAllProjects(token) {
   const out = [];
@@ -335,30 +361,42 @@ async function main() {
     nameMap[p.id_string]  = p.name || p.id_string;
   }
 
-  // Load on_hold list from project_ids.json (active_only is no longer used)
-  const ids       = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
-  const onHoldSet = new Set(ids.on_hold);
-
   // Get P1 delayed from Google Sheet
   const p1Delayed = await getP1Delayed();
   const is112 = name => /-112-/i.test(name || '');
 
   const now = new Date();
 
-  // Pre-pass: determine done vs active via الدفعة الثالثة milestone (cached, fast on repeat runs)
-  console.log(`Pre-pass: checking م3 milestone for ${projects.length - onHoldSet.size} non-hold projects...`);
-  const doneProjectIds  = new Set();
-  const projectMsMap    = {};
-  for (const p of projects) {
-    if (onHoldSet.has(p.id_string)) continue;
-    const ms = await getProjectM3(token, p);
-    projectMsMap[p.id_string] = ms;
-    if (ms.m3 === 'completed') doneProjectIds.add(p.id_string);
+  // Try criteria-based status filtering from Zoho API
+  console.log('Trying Zoho criteria API for On Hold & Completed...');
+  const apiOnHold    = await getProjectsByStatus(token, STATUS_ON_HOLD);
+  const apiCompleted = await getProjectsByStatus(token, STATUS_COMPLETED);
+
+  let onHoldSet, doneProjectIds, projectMsMap = {};
+
+  if (apiOnHold !== null && apiCompleted !== null) {
+    // Full automation: Zoho status via criteria API
+    console.log(`✓ Criteria API works: onHold=${apiOnHold.length} completed=${apiCompleted.length}`);
+    onHoldSet     = new Set(apiOnHold.map(p => p.id_string));
+    doneProjectIds = new Set(apiCompleted.map(p => p.id_string));
+  } else {
+    // Fallback: project_ids.json for on_hold + milestone pre-pass for done
+    console.log('  Criteria API failed — falling back to project_ids.json + milestone pre-pass');
+    const ids  = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
+    onHoldSet  = new Set(ids.on_hold);
+    doneProjectIds = new Set();
+    console.log(`Pre-pass: checking م3 for ${projects.length - onHoldSet.size} projects...`);
+    for (const p of projects) {
+      if (onHoldSet.has(p.id_string)) continue;
+      const ms = await getProjectM3(token, p);
+      projectMsMap[p.id_string] = ms;
+      if (ms.m3 === 'completed') doneProjectIds.add(p.id_string);
+    }
   }
 
-  const doneProjects    = projects.filter(p => doneProjectIds.has(p.id_string));
-  const onHoldProjects  = projects.filter(p => onHoldSet.has(p.id_string));
-  const activeProjects  = projects.filter(p => !doneProjectIds.has(p.id_string) && !onHoldSet.has(p.id_string));
+  const doneProjects   = projects.filter(p => doneProjectIds.has(p.id_string));
+  const onHoldProjects = projects.filter(p => onHoldSet.has(p.id_string));
+  const activeProjects = projects.filter(p => !doneProjectIds.has(p.id_string) && !onHoldSet.has(p.id_string));
   console.log(`✓ active: ${activeProjects.length}  on_hold: ${onHoldProjects.length}  done: ${doneProjects.length}`);
 
   // Count Active / OnHold per AM for the AM summary table
@@ -417,11 +455,11 @@ async function main() {
 
   console.log(`✓ ${processed} active projects analyzed`);
 
-  // Secondary loop: done projects — check if م3 completed this month (uses pre-pass cache, no extra API calls)
+  // Secondary loop: done projects — check if م3 completed this month
   console.log(`Checking ${doneProjects.length} done projects for completedMonth...`);
   for (const project of doneProjects) {
     const pid = project.id_string;
-    const ms  = projectMsMap[pid];
+    const ms  = projectMsMap[pid] || await getProjectM3(token, project);
     if (ms && isThisMonthMs(ms.m3t, now)) {
       const full  = await getProjectData(token, project);
       const owner = ownerMap[pid] || '';
