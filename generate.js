@@ -129,6 +129,8 @@ async function getAccessToken() {
 }
 
 // ── Project list (v2 returns all projects incl. Completed) ───────────────────
+let _projectApiDebug = {};
+
 async function getAllProjects(token) {
   const out = [];
   let index = 1;
@@ -140,7 +142,23 @@ async function getAllProjects(token) {
     if (batch.length < 100) break;
     index += 100;
   }
-  console.log(`✓ ${out.length} total projects from v2`);
+  console.log(`✓ ${out.length} total active projects from v2`);
+
+  // Debug: try different params to find completed projects
+  const tryCompleted = async (label, params) => {
+    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?${params}&index=1&range=5`);
+    const batch = res.projects || [];
+    const statuses = [...new Set(batch.map(p => (p.status?.name || p.status || '')))];
+    _projectApiDebug[label] = { count: batch.length, statuses, error: res.error };
+    console.log(`  [proj-debug] ${label}: count=${batch.length} statuses=${statuses.join('|')} err=${JSON.stringify(res.error)}`);
+  };
+
+  await tryCompleted('status=completed',   'status=completed');
+  await tryCompleted('status=Completed',   'status=Completed');
+  await tryCompleted('status=inactive',    'status=inactive');
+  await tryCompleted('status=all',         'status=all');
+  await tryCompleted('action=allprojects', 'action=allprojects');
+
   return out;
 }
 
@@ -174,9 +192,9 @@ function getCompletedThisMonth(allProjects) {
   };
   const isCompleted = p => statusStr(p).toLowerCase() === 'completed';
 
-  // Collect distinct status values for debug
+  // Collect distinct status values for debug (ALL projects)
   const seenStatuses = new Set();
-  for (const p of allProjects.slice(0, 200)) {
+  for (const p of allProjects) {
     const s = statusStr(p);
     if (!seenStatuses.has(s)) { seenStatuses.add(s); _completedDebug.distinctStatuses.push(s); }
   }
@@ -526,6 +544,7 @@ async function main() {
     amActive, amOnHold,
     cacheStats: { total: Object.keys(taskCache).length, hits: cacheHits, misses: cacheMisses },
     completedDebug: _completedDebug,
+    projectApiDebug: _projectApiDebug,
     sampleMilestones: _debugSamples.milestones,
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
