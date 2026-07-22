@@ -128,9 +128,10 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// ── Project list (v2 returns all projects incl. Completed) ───────────────────
-let _projectApiDebug = {};
-
+// ── Project list ──────────────────────────────────────────────────────────────
+// Zoho v2 returns ALL projects (active + completed) with status="active".
+// Completed projects don't have a distinct status — they're identified by NOT
+// being in project_ids.json and having last_updated_time_long in this month.
 async function getAllProjects(token) {
   const out = [];
   let index = 1;
@@ -142,91 +143,8 @@ async function getAllProjects(token) {
     if (batch.length < 100) break;
     index += 100;
   }
-  console.log(`✓ ${out.length} total active projects from v2`);
-
-  // Debug: try different params to find completed projects
-  const tryCompleted = async (label, params) => {
-    const res = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?${params}&index=1&range=5`);
-    const batch = res.projects || [];
-    const statuses = [...new Set(batch.map(p => (p.status?.name || p.status || '')))];
-    _projectApiDebug[label] = { count: batch.length, statuses, error: res.error };
-    console.log(`  [proj-debug] ${label}: count=${batch.length} statuses=${statuses.join('|')} err=${JSON.stringify(res.error)}`);
-  };
-
-  await tryCompleted('status=completed',   'status=completed');
-  await tryCompleted('status=Completed',   'status=Completed');
-  await tryCompleted('status=inactive',    'status=inactive');
-  await tryCompleted('status=all',         'status=all');
-  await tryCompleted('action=allprojects', 'action=allprojects');
-
+  console.log(`✓ ${out.length} total projects from v2`);
   return out;
-}
-
-// ── Completed-this-month projects (v2, from already-fetched project list) ─────
-let _completedDebug = { distinctStatuses: [], totalCompleted: 0, samples: [], dateFieldDebug: [] };
-
-function getCompletedThisMonth(allProjects) {
-  const now   = new Date();
-  const yr    = now.getFullYear();
-  const mo    = now.getMonth() + 1;
-  const label = `${yr}-${String(mo).padStart(2,'0')}`;
-
-  function matchesMonth(d) {
-    if (!d) return false;
-    // Handle numeric timestamp (ms)
-    const num = typeof d === 'number' ? d : (typeof d === 'string' && /^\d{10,}$/.test(d) ? parseInt(d) : null);
-    if (num !== null) {
-      const dt = new Date(num);
-      return dt.getFullYear() === yr && dt.getMonth() + 1 === mo;
-    }
-    // Zoho v2 uses MM-DD-YYYY
-    const m = String(d).match(/^(\d{2})-\d{2}-(\d{4})/);
-    if (m) return parseInt(m[1]) === mo && parseInt(m[2]) === yr;
-    // ISO prefix YYYY-MM
-    return String(d).startsWith(label);
-  }
-
-  const statusStr = p => {
-    const s = p.status || '';
-    return typeof s === 'string' ? s : (s.name || '');
-  };
-  const isCompleted = p => statusStr(p).toLowerCase() === 'completed';
-
-  // Collect distinct status values for debug (ALL projects)
-  const seenStatuses = new Set();
-  for (const p of allProjects) {
-    const s = statusStr(p);
-    if (!seenStatuses.has(s)) { seenStatuses.add(s); _completedDebug.distinctStatuses.push(s); }
-  }
-
-  const result = [];
-  for (const p of allProjects) {
-    if (!isCompleted(p)) continue;
-    _completedDebug.totalCompleted++;
-
-    // Save first 3 completed project samples with all date-related fields
-    if (_completedDebug.samples.length < 3) {
-      _completedDebug.samples.push({
-        id: p.id_string, name: p.name, status: p.status,
-        end_date: p.end_date, completed_time: p.completed_time,
-        completed_date: p.completed_date, completed_time_long: p.completed_time_long,
-        last_updated_time: p.last_updated_time, last_updated_time_long: p.last_updated_time_long,
-        updated_time: p.updated_time, updated_time_long: p.updated_time_long,
-      });
-    }
-
-    if (EXCLUDE.has(p.owner?.name || p.owner_name || '')) continue;
-    const d = p.completed_time_long || p.completed_time || p.completed_date || p.end_date || '';
-    const matches = matchesMonth(d);
-    if (_completedDebug.dateFieldDebug.length < 5) {
-      _completedDebug.dateFieldDebug.push({ name: p.name, d, matches });
-    }
-    if (matches) result.push(p.id_string);
-  }
-
-  console.log(`✓ ${result.length} projects completed in ${label} (v2)`);
-  console.log(`  [completedDebug] totalCompleted=${_completedDebug.totalCompleted} statuses=${[...seenStatuses].join('|')}`);
-  return result;
 }
 
 // ── Google Sheet: الدفعة الأولى المتأخرة ─────────────────────────────────────
@@ -390,17 +308,24 @@ async function main() {
   const activeOnlySet = new Set(ids.active_only);
   const onHoldSet     = new Set(ids.on_hold);
 
-  // Get completed-this-month projects from v2 (already fetched above, no extra API calls)
-  const completedThisMonthIds = getCompletedThisMonth(projects);
-
   // Get P1 delayed from Google Sheet
   const p1Delayed = await getP1Delayed();
   const is112 = name => /-112-/i.test(name || '');
-  const completed112Ids   = completedThisMonthIds.filter(pid => is112(nameMap[pid] || pid));
-  const completedMonthIds = completedThisMonthIds.filter(pid => !is112(nameMap[pid] || pid));
+
+  const now = new Date();
+
+  // Non-active projects updated this month = recently completed projects.
+  // Zoho v2 returns ALL projects as "active" — completed ones are those NOT in
+  // project_ids.json that were updated this month (license task done → project updated).
+  const monthStartMs = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const recentlyDoneProjects = projects.filter(p =>
+    !activeOnlySet.has(p.id_string) &&
+    !onHoldSet.has(p.id_string) &&
+    (p.last_updated_time_long || 0) >= monthStartMs
+  );
 
   const activeOnlyProjects = projects.filter(p => activeOnlySet.has(p.id_string));
-  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}  completed_month: ${completedThisMonthIds.length} (112: ${completed112Ids.length})`);
+  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}  recently_done_this_month: ${recentlyDoneProjects.length}`);
 
   // Count Active / OnHold per AM for the AM summary table
   const amActive = {};
@@ -419,7 +344,6 @@ async function main() {
     sijilDelay:{}, sijilAmer:{}, amer:{},
   };
 
-  const now = new Date();
   let processed = 0;
 
   for (const project of activeOnlyProjects) {
@@ -451,16 +375,23 @@ async function main() {
 
   console.log(`✓ ${processed} active projects analyzed`);
 
-  // Secondary loop: check completed-this-month projects for licMonth only
-  console.log(`Checking ${completedThisMonthIds.length} completed projects for licMonth...`);
-  for (const pid of completedThisMonthIds) {
-    if (B.licMonth[pid]) continue;
-    const project = projects.find(p => p.id_string === pid);
-    if (!project) continue;
+  // Secondary loop: recently-done projects — check for licMonth + build completedMonth/112
+  // These are non-active projects updated this month (license done → project moved to "done")
+  console.log(`Checking ${recentlyDoneProjects.length} recently-done projects for licMonth/completedMonth...`);
+  const completedMonthIds = [];
+  const completed112Ids   = [];
+  for (const project of recentlyDoneProjects) {
+    const pid = project.id_string;
+    if (B.licMonth[pid]) continue; // already counted in primary loop
     const e = await getProjectData(token, project);
-    if (e.lic > 0 && isThisMonthMs(e.lic, now)) B.licMonth[pid] = ownerMap[pid];
+    if (e.lic > 0 && isThisMonthMs(e.lic, now)) {
+      const owner = ownerMap[pid] || '';
+      B.licMonth[pid] = owner;
+      if (is112(nameMap[pid] || pid)) completed112Ids.push(pid);
+      else                            completedMonthIds.push(pid);
+    }
   }
-  console.log(`✓ licMonth total: ${Object.keys(B.licMonth).length}`);
+  console.log(`✓ licMonth total: ${Object.keys(B.licMonth).length} (completedMonth=${completedMonthIds.length} completed112=${completed112Ids.length})`);
 
   function summarize(bucket) {
     const byManager = {};
@@ -543,8 +474,7 @@ async function main() {
     metrics: Object.fromEntries([...METRIC_KEYS,'completedMonth','completed112'].map(k => [k, data[k].total])),
     amActive, amOnHold,
     cacheStats: { total: Object.keys(taskCache).length, hits: cacheHits, misses: cacheMisses },
-    completedDebug: _completedDebug,
-    projectApiDebug: _projectApiDebug,
+    recentlyDoneCount: recentlyDoneProjects.length,
     sampleMilestones: _debugSamples.milestones,
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
