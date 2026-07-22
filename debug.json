@@ -30,81 +30,87 @@
   },
   "cacheStats": {
     "total": 893,
-    "hits": 892,
-    "misses": 1
+    "hits": 893,
+    "misses": 0
   },
   "doneProjectsCount": 683,
-  "statusProbe": {
-    "Active": {
-      "count": 0,
-      "error": {
-        "code": 6891,
-        "message": "Given URL is wrong"
-      },
-      "statuses": [],
-      "firstProjId": null
-    },
-    "On Hold": {
-      "count": 0,
-      "error": {
-        "code": 6891,
-        "message": "Given URL is wrong"
-      },
-      "statuses": [],
-      "firstProjId": null
-    },
-    "Completed": {
-      "count": 0,
-      "error": {
-        "code": 6891,
-        "message": "Given URL is wrong"
-      },
-      "statuses": [],
-      "firstProjId": null
-    },
-    "Completed v3": {
-      "count": 0,
-      "error": null,
-      "statuses": [],
-      "firstProjId": null
-    },
-    "no filter 5": {
-      "count": 5,
-      "error": null,
-      "statuses": [
-        "active"
+  "v3Probe": {
+    "noFilter": {
+      "httpStatus": null,
+      "keys": [
+        "error"
       ],
-      "firstProjId": "2533013000003746109"
-    },
-    "_rawStatus": [
-      {
-        "id": "2533013000003746109",
-        "name": "1081-113-1",
-        "status": "active"
-      },
-      {
-        "id": "2533013000003746003",
-        "name": "1080-113-1",
-        "status": "active"
-      },
-      {
-        "id": "2533013000003740627",
-        "name": "1079-113-1",
-        "status": "active"
-      },
-      {
-        "id": "2533013000003740547",
-        "name": "33-112-19",
-        "status": "active"
-      },
-      {
-        "id": "2533013000003740463",
-        "name": "1078-1215-1",
-        "status": "active"
+      "total": null,
+      "projCount": 0,
+      "statuses": [],
+      "error": {
+        "status_code": "400",
+        "instance": "/api/v3/portal/896030705/projects/",
+        "title": "URL_RULE_NOT_CONFIGURED",
+        "error_type": "FIELDS_VALIDATION_ERROR",
+        "details": [
+          {
+            "message": "Given URL is wrong"
+          }
+        ]
       }
-    ]
+    },
+    "criteriaCompleted": {
+      "keys": [
+        "error"
+      ],
+      "total": null,
+      "projCount": 0,
+      "samples": [],
+      "error": {
+        "status_code": "400",
+        "instance": "/api/v3/portal/896030705/projects/",
+        "title": "URL_RULE_NOT_CONFIGURED",
+        "error_type": "FIELDS_VALIDATION_ERROR",
+        "details": [
+          {
+            "message": "Given URL is wrong"
+          }
+        ]
+      }
+    },
+    "customView": {
+      "keys": [
+        "error"
+      ],
+      "total": null,
+      "projCount": 0,
+      "error": {
+        "status_code": "400",
+        "instance": "/api/v3/portal/896030705/projects/",
+        "title": "URL_RULE_NOT_CONFIGURED",
+        "error_type": "FIELDS_VALIDATION_ERROR",
+        "details": [
+          {
+            "message": "Given URL is wrong"
+          }
+        ]
+      }
+    },
+    "customFields": {
+      "keys": [
+        "error"
+      ],
+      "error": {
+        "status_code": "400",
+        "instance": "/api/v3/portal/896030705/projectcustomfields/",
+        "title": "URL_RULE_NOT_CONFIGURED",
+        "error_type": "FIELDS_VALIDATION_ERROR",
+        "details": [
+          {
+            "message": "Given URL is wrong"
+          }
+        ]
+      },
+      "sample": "{\"error\":{\"status_code\":\"400\",\"instance\":\"/api/v3/portal/896030705/projectcustomfields/\",\"title\":\"URL_RULE_NOT_CONFIGURED\",\"error_type\":\"FIELDS_VALIDATION_ERROR\",\"details\":[{\"message\":\"Given URL is wrong\"}]}}"
+    }
   },
   "sampleMilestones": [],
   "sampleTasks": [],
-  "ts": "2026-07-22T13:20:53.067Z"
+  "ts": "2026-07-22T13:58:52.877Z"
 }
