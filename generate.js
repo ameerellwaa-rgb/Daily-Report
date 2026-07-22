@@ -374,12 +374,17 @@ async function main() {
 
   let onHoldSet, doneProjectIds, projectMsMap = {};
 
-  if (apiOnHold !== null && apiCompleted !== null) {
+  const criteriaWorked = apiOnHold !== null && apiCompleted !== null
+    && apiOnHold.length < projects.length && apiCompleted.length < projects.length
+    && apiOnHold.length > 0;
+
+  if (criteriaWorked) {
     // Full automation: Zoho status via criteria API
     console.log(`✓ Criteria API works: onHold=${apiOnHold.length} completed=${apiCompleted.length}`);
     onHoldSet     = new Set(apiOnHold.map(p => p.id_string));
     doneProjectIds = new Set(apiCompleted.map(p => p.id_string));
   } else {
+    if (apiOnHold !== null) console.log(`  Criteria ignored by API (returned ${apiOnHold?.length} for onHold) — falling back`);
     // Fallback: project_ids.json for on_hold + milestone pre-pass for done
     console.log('  Criteria API failed — falling back to project_ids.json + milestone pre-pass');
     const ids  = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
@@ -508,7 +513,7 @@ async function main() {
       timeZone:'Africa/Cairo', weekday:'long', year:'numeric',
       month:'long', day:'numeric', hour:'2-digit', minute:'2-digit'
     }),
-    month: ids.month || new Date().toISOString().slice(0,7),
+    month: new Date().toISOString().slice(0,7),
     dateKey: new Date().toISOString().slice(0, 10),
   };
 
