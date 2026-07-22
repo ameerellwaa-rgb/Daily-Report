@@ -128,10 +128,36 @@ async function getAccessToken() {
   return data.access_token;
 }
 
+// ── Status filter probe ───────────────────────────────────────────────────────
+async function probeStatusFilters(token) {
+  const results = {};
+  // Try Capital versions as shown in Zoho UI
+  const tests = [
+    ['Active',      `/portal/${PORTAL_ID}/projects/?status=Active&range=5`],
+    ['On Hold',     `/portal/${PORTAL_ID}/projects/?status=On%20Hold&range=5`],
+    ['Completed',   `/portal/${PORTAL_ID}/projects/?status=Completed&range=5`],
+    ['Completed v3',`/portal/${PORTAL_ID}/projects/?status=Completed&range=5`, true],
+    ['no filter 5', `/portal/${PORTAL_ID}/projects/?range=5`],
+  ];
+  for (const [label, path, v3] of tests) {
+    const res = await zohoGet(token, path, v3 || false);
+    const projs = res.projects || [];
+    results[label] = {
+      count:       projs.length,
+      error:       res.error || null,
+      statuses:    [...new Set(projs.map(p => p.status?.name || p.status || '?'))],
+      firstProjId: projs[0]?.id_string || null,
+    };
+  }
+  // Also log raw status field of first 5 projects from normal call
+  const raw = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?range=5`);
+  results['_rawStatus'] = (raw.projects || []).map(p => ({
+    id: p.id_string, name: p.name, status: p.status, statusName: p.status?.name
+  }));
+  return results;
+}
+
 // ── Project list ──────────────────────────────────────────────────────────────
-// Zoho v2 returns ALL projects (active + completed) with status="active".
-// Completed projects don't have a distinct status — they're identified by NOT
-// being in project_ids.json and having last_updated_time_long in this month.
 async function getAllProjects(token) {
   const out = [];
   let index = 1;
@@ -323,6 +349,8 @@ async function main() {
   }
 
   const token    = await getAccessToken();
+  const statusProbe = await probeStatusFilters(token);
+  console.log('Status probe:', JSON.stringify(statusProbe, null, 2));
   const projects = await getAllProjects(token);
 
   // Build owner and name maps (all projects, including Completed)
@@ -502,6 +530,7 @@ async function main() {
     amActive, amOnHold,
     cacheStats: { total: Object.keys(taskCache).length, hits: cacheHits, misses: cacheMisses },
     doneProjectsCount: doneProjects.length,
+    statusProbe,
     sampleMilestones: _debugSamples.milestones,
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
