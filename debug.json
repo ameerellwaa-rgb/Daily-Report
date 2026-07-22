@@ -4,7 +4,7 @@
     "p3": 52,
     "recv": 45,
     "coll": 25,
-    "licMonth": 53,
+    "licMonth": 51,
     "sijilSaudi": 106,
     "clientApproval": 57,
     "overDue": 1,
@@ -40,6 +40,46 @@
     "totalCompleted": 0,
     "samples": [],
     "dateFieldDebug": []
+  },
+  "projectApiDebug": {
+    "status=completed": {
+      "count": 0,
+      "statuses": [],
+      "error": {
+        "code": 6891,
+        "message": "Given URL is wrong"
+      }
+    },
+    "status=Completed": {
+      "count": 0,
+      "statuses": [],
+      "error": {
+        "code": 6891,
+        "message": "Given URL is wrong"
+      }
+    },
+    "status=inactive": {
+      "count": 0,
+      "statuses": [],
+      "error": {
+        "code": 6891,
+        "message": "Given URL is wrong"
+      }
+    },
+    "status=all": {
+      "count": 0,
+      "statuses": [],
+      "error": {
+        "code": 6891,
+        "message": "Given URL is wrong"
+      }
+    },
+    "action=allprojects": {
+      "count": 5,
+      "statuses": [
+        "active"
+      ]
+    }
   },
   "sampleMilestones": [
     {
@@ -421,5 +461,5 @@
       }
     }
   ],
-  "ts": "2026-07-22T10:03:53.129Z"
+  "ts": "2026-07-22T10:17:44.872Z"
 }
