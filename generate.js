@@ -135,32 +135,44 @@ async function getAllProjects(token) {
   return out;
 }
 
-// ── Completed-this-month projects (v3 API) ────────────────────────────────────
-async function getCompletedThisMonth(token) {
-  const now = new Date();
-  const thisMonth = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
-  const completed = [];
-  let index = 1;
-  while (true) {
-    const res = await zohoGet(token, `/api/v3/portal/${PORTAL_ID}/projects/?index=${index}&range=200`, true);
-    if (index === 1) console.log('[v3 debug] keys:', Object.keys(res || {}).join(','), '| data keys:', Object.keys(res?.data || {}).join(','), '| sample:', JSON.stringify(res).slice(0, 300));
-    const batch = res.data?.result || res.data?.projects || res.projects || res.result || [];
-    if (batch.length === 0) break;
-    for (const p of batch) {
-      if (
-        p.status?.name === 'Completed' &&
-        p.completed_time &&
-        p.completed_time.startsWith(thisMonth) &&
-        !EXCLUDE.has(p.owner?.name || '')
-      ) {
-        completed.push(p.id || p.id_string);
-      }
-    }
-    if (batch.length < 200) break;
-    index += 200;
+// ── Completed-this-month projects (v2, from already-fetched project list) ─────
+function getCompletedThisMonth(allProjects) {
+  const now   = new Date();
+  const yr    = now.getFullYear();
+  const mo    = now.getMonth() + 1;
+  const label = `${yr}-${String(mo).padStart(2,'0')}`;
+
+  function matchesMonth(d) {
+    if (!d) return false;
+    // Zoho v2 uses MM-DD-YYYY
+    const m = d.match(/^(\d{2})-\d{2}-(\d{4})/);
+    if (m) return parseInt(m[1]) === mo && parseInt(m[2]) === yr;
+    // ISO prefix YYYY-MM
+    return d.startsWith(label);
   }
-  console.log(`✓ ${completed.length} projects completed in ${thisMonth}`);
-  return completed;
+
+  const isCompleted = p => {
+    const s = p.status || '';
+    return typeof s === 'string'
+      ? s.toLowerCase() === 'completed'
+      : (s.name || '').toLowerCase() === 'completed';
+  };
+
+  let debugDone = false;
+  const result = [];
+  for (const p of allProjects) {
+    if (!isCompleted(p)) continue;
+    if (!debugDone) {
+      debugDone = true;
+      console.log('[v2-completed-sample]', JSON.stringify(p).slice(0, 500));
+    }
+    if (EXCLUDE.has(p.owner?.name || p.owner_name || '')) continue;
+    const d = p.completed_time || p.completed_date || p.end_date || '';
+    if (matchesMonth(d)) result.push(p.id_string);
+  }
+
+  console.log(`✓ ${result.length} projects completed in ${label} (v2)`);
+  return result;
 }
 
 // ── Google Sheet: الدفعة الأولى المتأخرة ─────────────────────────────────────
@@ -265,13 +277,13 @@ async function main() {
     nameMap[p.id_string]  = p.name || p.id_string;
   }
 
-  // Load project_ids.json (active_only and on_hold only; completed comes from v3 dynamically)
+  // Load project_ids.json (active_only and on_hold only)
   const ids = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
   const activeOnlySet = new Set(ids.active_only);
   const onHoldSet     = new Set(ids.on_hold);
 
-  // Get completed-this-month projects from v3 API
-  const completedThisMonthIds = await getCompletedThisMonth(token);
+  // Get completed-this-month projects from v2 (already fetched above, no extra API calls)
+  const completedThisMonthIds = getCompletedThisMonth(projects);
 
   // Get P1 delayed from Google Sheet
   const p1Delayed = await getP1Delayed();
