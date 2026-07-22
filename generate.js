@@ -145,6 +145,8 @@ async function getAllProjects(token) {
 }
 
 // ── Completed-this-month projects (v2, from already-fetched project list) ─────
+let _completedDebug = { distinctStatuses: [], totalCompleted: 0, samples: [], dateFieldDebug: [] };
+
 function getCompletedThisMonth(allProjects) {
   const now   = new Date();
   const yr    = now.getFullYear();
@@ -153,34 +155,59 @@ function getCompletedThisMonth(allProjects) {
 
   function matchesMonth(d) {
     if (!d) return false;
+    // Handle numeric timestamp (ms)
+    const num = typeof d === 'number' ? d : (typeof d === 'string' && /^\d{10,}$/.test(d) ? parseInt(d) : null);
+    if (num !== null) {
+      const dt = new Date(num);
+      return dt.getFullYear() === yr && dt.getMonth() + 1 === mo;
+    }
     // Zoho v2 uses MM-DD-YYYY
-    const m = d.match(/^(\d{2})-\d{2}-(\d{4})/);
+    const m = String(d).match(/^(\d{2})-\d{2}-(\d{4})/);
     if (m) return parseInt(m[1]) === mo && parseInt(m[2]) === yr;
     // ISO prefix YYYY-MM
-    return d.startsWith(label);
+    return String(d).startsWith(label);
   }
 
-  const isCompleted = p => {
+  const statusStr = p => {
     const s = p.status || '';
-    return typeof s === 'string'
-      ? s.toLowerCase() === 'completed'
-      : (s.name || '').toLowerCase() === 'completed';
+    return typeof s === 'string' ? s : (s.name || '');
   };
+  const isCompleted = p => statusStr(p).toLowerCase() === 'completed';
 
-  let debugDone = false;
+  // Collect distinct status values for debug
+  const seenStatuses = new Set();
+  for (const p of allProjects.slice(0, 200)) {
+    const s = statusStr(p);
+    if (!seenStatuses.has(s)) { seenStatuses.add(s); _completedDebug.distinctStatuses.push(s); }
+  }
+
   const result = [];
   for (const p of allProjects) {
     if (!isCompleted(p)) continue;
-    if (!debugDone) {
-      debugDone = true;
-      console.log('[v2-completed-sample]', JSON.stringify(p).slice(0, 500));
+    _completedDebug.totalCompleted++;
+
+    // Save first 3 completed project samples with all date-related fields
+    if (_completedDebug.samples.length < 3) {
+      _completedDebug.samples.push({
+        id: p.id_string, name: p.name, status: p.status,
+        end_date: p.end_date, completed_time: p.completed_time,
+        completed_date: p.completed_date, completed_time_long: p.completed_time_long,
+        last_updated_time: p.last_updated_time, last_updated_time_long: p.last_updated_time_long,
+        updated_time: p.updated_time, updated_time_long: p.updated_time_long,
+      });
     }
+
     if (EXCLUDE.has(p.owner?.name || p.owner_name || '')) continue;
-    const d = p.completed_time || p.completed_date || p.end_date || '';
-    if (matchesMonth(d)) result.push(p.id_string);
+    const d = p.completed_time_long || p.completed_time || p.completed_date || p.end_date || '';
+    const matches = matchesMonth(d);
+    if (_completedDebug.dateFieldDebug.length < 5) {
+      _completedDebug.dateFieldDebug.push({ name: p.name, d, matches });
+    }
+    if (matches) result.push(p.id_string);
   }
 
   console.log(`✓ ${result.length} projects completed in ${label} (v2)`);
+  console.log(`  [completedDebug] totalCompleted=${_completedDebug.totalCompleted} statuses=${[...seenStatuses].join('|')}`);
   return result;
 }
 
@@ -498,6 +525,7 @@ async function main() {
     metrics: Object.fromEntries([...METRIC_KEYS,'completedMonth','completed112'].map(k => [k, data[k].total])),
     amActive, amOnHold,
     cacheStats: { total: Object.keys(taskCache).length, hits: cacheHits, misses: cacheMisses },
+    completedDebug: _completedDebug,
     sampleMilestones: _debugSamples.milestones,
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
