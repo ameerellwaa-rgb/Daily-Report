@@ -1,10 +1,10 @@
 {
   "metrics": {
-    "p2": 44,
+    "p2": 46,
     "p3": 51,
-    "recv": 46,
+    "recv": 45,
     "coll": 26,
-    "licMonth": 50,
+    "licMonth": 52,
     "sijilSaudi": 106,
     "clientApproval": 57,
     "overDue": 1,
@@ -408,5 +408,5 @@
       }
     }
   ],
-  "ts": "2026-07-21T18:59:04.272Z"
+  "ts": "2026-07-22T08:38:33.618Z"
 }
