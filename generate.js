@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 const https = require('https');
 const fs    = require('fs');
 
@@ -103,10 +103,13 @@ async function zohoGet(token, path, v3 = false, _retry = 1) {
     windowStart = Date.now();
   }
   reqCount++;
-  const base = v3 ? 'https://projectsapi.zoho.com' : 'https://projectsapi.zoho.com/restapi';
+  let base;
+  if (v3 === 'web') base = 'https://projects.zoho.com/api/v3';
+  else if (v3) base = 'https://projectsapi.zoho.com';
+  else base = 'https://projectsapi.zoho.com/restapi';
   const res = await httpGet(
     `${base}${path}`,
-    { Authorization: `Zoho-oauthtoken ${token}` }
+    { Authorization: `Zoho-oauthtoken ${token}`, Accept: 'json' }
   ).catch(e => { console.error('GET error:', path, e.message); return {}; });
 
   if (res.error?.title === 'URL_ROLLING_THROTTLES_LIMIT_EXCEEDED' && _retry > 0) {
@@ -128,32 +131,52 @@ async function getAccessToken() {
   return data.access_token;
 }
 
-// ── Status filter probe ───────────────────────────────────────────────────────
-async function probeStatusFilters(token) {
+// ── V3 web API probe ──────────────────────────────────────────────────────────
+async function probeV3API(token) {
   const results = {};
-  // Try Capital versions as shown in Zoho UI
-  const tests = [
-    ['Active',      `/portal/${PORTAL_ID}/projects/?status=Active&range=5`],
-    ['On Hold',     `/portal/${PORTAL_ID}/projects/?status=On%20Hold&range=5`],
-    ['Completed',   `/portal/${PORTAL_ID}/projects/?status=Completed&range=5`],
-    ['Completed v3',`/portal/${PORTAL_ID}/projects/?status=Completed&range=5`, true],
-    ['no filter 5', `/portal/${PORTAL_ID}/projects/?range=5`],
-  ];
-  for (const [label, path, v3] of tests) {
-    const res = await zohoGet(token, path, v3 || false);
-    const projs = res.projects || [];
-    results[label] = {
-      count:       projs.length,
-      error:       res.error || null,
-      statuses:    [...new Set(projs.map(p => p.status?.name || p.status || '?'))],
-      firstProjId: projs[0]?.id_string || null,
-    };
-  }
-  // Also log raw status field of first 5 projects from normal call
-  const raw = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?range=5`);
-  results['_rawStatus'] = (raw.projects || []).map(p => ({
-    id: p.id_string, name: p.name, status: p.status, statusName: p.status?.name
+
+  // Test 1: v3 web API no filter — see what status field looks like
+  const r1 = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?per_page=5`, 'web');
+  results.noFilter = {
+    httpStatus: r1.status || null,
+    keys:       Object.keys(r1),
+    total:      r1.total_count || r1.total || null,
+    projCount:  (r1.projects || []).length,
+    statuses:   (r1.projects || []).map(p => ({ id: p.id_string, statusObj: p.status })),
+    error:      r1.error || null,
+  };
+
+  // Test 2: criteria filter — status = Completed (ID known from DevTools)
+  const completedCriteria = encodeURIComponent(JSON.stringify({
+    criteria: [{ criteria_condition: 'is', value: ['2533013000000020116'], cfid: '2533013000000020044' }],
+    pattern: '1',
   }));
+  const r2 = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?per_page=5&criteria=${completedCriteria}`, 'web');
+  results.criteriaCompleted = {
+    keys:      Object.keys(r2),
+    total:     r2.total_count || r2.total || null,
+    projCount: (r2.projects || []).length,
+    samples:   (r2.projects || []).slice(0, 3).map(p => ({ id: p.id_string, name: p.name, status: p.status })),
+    error:     r2.error || null,
+  };
+
+  // Test 3: custom_view_id for "Completed + This Month" saved view
+  const r3 = await zohoGet(token, `/portal/${PORTAL_ID}/projects/?per_page=5&custom_view_id=2533013000000061778`, 'web');
+  results.customView = {
+    keys:      Object.keys(r3),
+    total:     r3.total_count || r3.total || null,
+    projCount: (r3.projects || []).length,
+    error:     r3.error || null,
+  };
+
+  // Test 4: get project statuses list (cfid-based)
+  const r4 = await zohoGet(token, `/portal/${PORTAL_ID}/projectcustomfields/`, 'web');
+  results.customFields = {
+    keys:  Object.keys(r4),
+    error: r4.error || null,
+    sample: JSON.stringify(r4).slice(0, 500),
+  };
+
   return results;
 }
 
@@ -349,8 +372,8 @@ async function main() {
   }
 
   const token    = await getAccessToken();
-  const statusProbe = await probeStatusFilters(token);
-  console.log('Status probe:', JSON.stringify(statusProbe, null, 2));
+  const v3Probe = await probeV3API(token);
+  console.log('V3 probe:', JSON.stringify(v3Probe, null, 2));
   const projects = await getAllProjects(token);
 
   // Build owner and name maps (all projects, including Completed)
@@ -530,7 +553,7 @@ async function main() {
     amActive, amOnHold,
     cacheStats: { total: Object.keys(taskCache).length, hits: cacheHits, misses: cacheMisses },
     doneProjectsCount: doneProjects.length,
-    statusProbe,
+    v3Probe,
     sampleMilestones: _debugSamples.milestones,
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
