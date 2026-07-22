@@ -1,18 +1,18 @@
 {
   "metrics": {
-    "p2": 42,
-    "p3": 49,
-    "recv": 45,
-    "coll": 25,
-    "licMonth": 52,
-    "sijilSaudi": 107,
-    "clientApproval": 57,
+    "p2": 46,
+    "p3": 52,
+    "recv": 42,
+    "coll": 23,
+    "licMonth": 62,
+    "sijilSaudi": 108,
+    "clientApproval": 56,
     "overDue": 1,
     "sijilDelay": 1,
     "sijilAmer": 2,
-    "amer": 13,
-    "completedMonth": 0,
-    "completed112": 0
+    "amer": 12,
+    "completedMonth": 22,
+    "completed112": 3
   },
   "amActive": {
     "Mostafa Ellwaa": 5,
@@ -29,11 +29,11 @@
     "Jenna Ellwaa": 4
   },
   "cacheStats": {
-    "total": 187,
+    "total": 892,
     "hits": 0,
-    "misses": 187
+    "misses": 892
   },
-  "recentlyDoneCount": 0,
+  "doneProjectsCount": 682,
   "sampleMilestones": [
     {
       "end_date": "08-10-2026",
@@ -296,7 +296,7 @@
       "is_comment_added": false,
       "end_date_format": "07-22-2026 09:00:00 AM",
       "added_via": "web",
-      "last_updated_time_long": 1784627569969,
+      "last_updated_time_long": 1784719715697,
       "is_forum_associated": false,
       "details": {
         "owners": [
@@ -319,7 +319,7 @@
           "2533013000003722438": {
             "PROJECTID": "2533013000003740027",
             "DEPENDENCY_TYPE": "FS",
-            "IS_COMPLETED": false,
+            "IS_COMPLETED": true,
             "PROJECTNAME": "1075-1215-1",
             "KEY": "10F7-T3",
             "NAME": "عمل جروب واتس اب للعميل"
@@ -327,7 +327,7 @@
           "2533013000003722436": {
             "PROJECTID": "2533013000003740027",
             "DEPENDENCY_TYPE": "SS",
-            "IS_COMPLETED": false,
+            "IS_COMPLETED": true,
             "PROJECTNAME": "1075-1215-1",
             "KEY": "10F7-T1",
             "NAME": "دفعة بدون فاتورة"
@@ -343,8 +343,9 @@
       "work": "00:00",
       "start_date_format": "07-22-2026 09:00:00 AM",
       "isparent": false,
+      "completed_time_long": 1784719715697,
       "work_type": "work_hours",
-      "completed": false,
+      "completed": true,
       "task_followers": {
         "FOLUSERS": "",
         "FOLLOWERSIZE": -1,
@@ -353,7 +354,7 @@
       "priority": "None",
       "task_duration_as_work": true,
       "created_by": "887911019",
-      "last_updated_time": "07-21-2026",
+      "last_updated_time": "07-22-2026",
       "name": "تحويل بنكى سعودى 15 % فاتورة قيمة مضافة (تكلفة اضافية)",
       "is_docs_assocoated": false,
       "tasklist": {
@@ -361,14 +362,14 @@
         "id_string": "2533013000003722432",
         "id": "2533013000003722432"
       },
-      "last_updated_time_format": "07-21-2026 10:52:49 AM",
+      "last_updated_time_format": "07-22-2026 12:28:35 PM",
       "billingtype": "None",
       "order_sequence": 4,
       "status": {
-        "name": "Open",
-        "id": "2533013000000016068",
-        "type": "open",
-        "color_code": "#398EF3"
+        "name": "finished",
+        "id": "2533013000000277143",
+        "type": "closed",
+        "color_code": "#5DC35A"
       },
       "end_date": "07-22-2026",
       "milestone_id": "2533013000003722429",
@@ -386,6 +387,7 @@
       "description": "",
       "created_by_zpuid": "2533013000000059003",
       "work_form": "standard_work",
+      "completed_time_format": "07-22-2026 12:28:35 PM",
       "end_date_long": 1784707200000,
       "duration": "0",
       "created_by_email": "ellwaa@ellwaa.org",
@@ -399,7 +401,7 @@
       "created_by_full_name": "Walid Mohsen",
       "subtasks": false,
       "duration_type": "days",
-      "percent_complete": "0",
+      "percent_complete": "100",
       "GROUP_NAME": {
         "ASSOCIATED_TEAMS": {
           "AnyTeam": "Not Associated"
@@ -407,6 +409,7 @@
         "ASSOCIATED_TEAMS_COUNT": 0,
         "IS_TEAM_UNASSIGNED": true
       },
+      "completed_time": "07-22-2026",
       "id_string": "2533013000003722437",
       "log_hours": {
         "non_billable_hours": "0.0",
@@ -414,5 +417,5 @@
       }
     }
   ],
-  "ts": "2026-07-22T11:06:13.376Z"
+  "ts": "2026-07-22T12:03:53.277Z"
 }
