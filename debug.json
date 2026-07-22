@@ -33,6 +33,14 @@
     "hits": 0,
     "misses": 187
   },
+  "completedDebug": {
+    "distinctStatuses": [
+      "active"
+    ],
+    "totalCompleted": 0,
+    "samples": [],
+    "dateFieldDebug": []
+  },
   "sampleMilestones": [
     {
       "end_date": "08-10-2026",
@@ -413,5 +421,5 @@
       }
     }
   ],
-  "ts": "2026-07-22T09:48:32.004Z"
+  "ts": "2026-07-22T10:03:53.129Z"
 }
