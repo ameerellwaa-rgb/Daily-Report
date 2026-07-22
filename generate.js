@@ -234,8 +234,12 @@ async function getProjectData(token, project) {
   const licFin   = licTask && st(licTask) === 'finished';
   const sijilOpen = tasks.find(t => (t.name || '').includes('تسليم نسخة من السجل التجارى') && st(t) === 'open');
   const ovOpen    = tasks.find(t => (t.name || '').includes('عمل الاوفر فيو')                && st(t) === 'open');
-  const m2 = milestones.find(m => m.name === 'الدفعة الثانية');
-  const m3 = milestones.find(m => m.name === 'الدفعة الثالثة');
+  const m2   = milestones.find(m => m.name === 'الدفعة الثانية');
+  const m3   = milestones.find(m => m.name === 'الدفعة الثالثة');
+  const m3st = m3 ? (m3.status || '').toLowerCase() : null;
+  const m3t  = m3st === 'completed'
+    ? (m3.completed_time_long || m3.completed_date_long || m3.end_date_long || 0)
+    : null;
 
   const entry = {
     u:   utime,
@@ -248,10 +252,37 @@ async function getProjectData(token, project) {
     sjE: sijilOpen ? (sijilOpen.end_date_long || null) : null,
     ovE: ovOpen    ? (ovOpen.end_date_long    || null) : null,
     m2:  m2 ? (m2.status || '').toLowerCase() : null,
-    m3:  m3 ? (m3.status || '').toLowerCase() : null,
+    m3:  m3st,
+    m3t,
   };
 
   taskCache[pid] = entry;
+  return entry;
+}
+
+// ── Lightweight milestone-only fetch (for done-project completedMonth check) ──
+async function getProjectM3(token, project) {
+  const pid   = project.id_string;
+  const utime = project.last_updated_time_long || 0;
+  const cKey  = 'ms_' + pid;
+  const cached = taskCache[cKey];
+  if (cached && cached.u === utime) { cacheHits++; return cached; }
+  cacheMisses++;
+
+  const msRes = await zohoGet(token, `/portal/${PORTAL_ID}/projects/${pid}/milestones/`);
+  const milestones = msRes.milestones || [];
+  const m3   = milestones.find(m => m.name === 'الدفعة الثالثة');
+  const m3st = m3 ? (m3.status || '').toLowerCase() : null;
+  const m3t  = m3st === 'completed'
+    ? (m3.completed_time_long || m3.completed_date_long || m3.end_date_long || 0)
+    : null;
+
+  if (m3 && m3st === 'completed' && cacheMisses <= 5) {
+    console.log(`  [m3-dbg] pid=${pid} keys=${Object.keys(m3).join(',')} m3t=${m3t}`);
+  }
+
+  const entry = { u: utime, m3: m3st, m3t };
+  taskCache[cKey] = entry;
   return entry;
 }
 
@@ -314,18 +345,9 @@ async function main() {
 
   const now = new Date();
 
-  // Non-active projects updated this month = recently completed projects.
-  // Zoho v2 returns ALL projects as "active" — completed ones are those NOT in
-  // project_ids.json that were updated this month (license task done → project updated).
-  const monthStartMs = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  const recentlyDoneProjects = projects.filter(p =>
-    !activeOnlySet.has(p.id_string) &&
-    !onHoldSet.has(p.id_string) &&
-    (p.last_updated_time_long || 0) >= monthStartMs
-  );
-
+  const doneProjects       = projects.filter(p => !activeOnlySet.has(p.id_string) && !onHoldSet.has(p.id_string));
   const activeOnlyProjects = projects.filter(p => activeOnlySet.has(p.id_string));
-  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}  recently_done_this_month: ${recentlyDoneProjects.length}`);
+  console.log(`✓ active_only: ${activeOnlyProjects.length}  on_hold: ${onHoldSet.size}  done: ${doneProjects.length}`);
 
   // Count Active / OnHold per AM for the AM summary table
   const amActive = {};
@@ -344,6 +366,8 @@ async function main() {
     sijilDelay:{}, sijilAmer:{}, amer:{},
   };
 
+  const completedMonthIds = [];
+  const completed112Ids   = [];
   let processed = 0;
 
   for (const project of activeOnlyProjects) {
@@ -368,6 +392,10 @@ async function main() {
     if (sijilOvr)                                                              B.sijilDelay[pid]    = owner;
     if (e.sj && e.am)                                                          B.sijilAmer[pid]     = owner;
     if (e.am)                                                                  B.amer[pid]          = owner;
+    if (e.m3t && isThisMonthMs(e.m3t, now)) {
+      if (is112(nameMap[pid] || pid)) completed112Ids.push(pid);
+      else                            completedMonthIds.push(pid);
+    }
 
     processed++;
     if (processed % 50 === 0) console.log(`  ${processed} / ${activeOnlyProjects.length} processed`);
@@ -375,20 +403,19 @@ async function main() {
 
   console.log(`✓ ${processed} active projects analyzed`);
 
-  // Secondary loop: recently-done projects — check for licMonth + build completedMonth/112
-  // These are non-active projects updated this month (license done → project moved to "done")
-  console.log(`Checking ${recentlyDoneProjects.length} recently-done projects for licMonth/completedMonth...`);
-  const completedMonthIds = [];
-  const completed112Ids   = [];
-  for (const project of recentlyDoneProjects) {
+  // Secondary loop: ALL done projects — check الدفعة الثالثة milestone for completedMonth
+  console.log(`Checking ${doneProjects.length} done projects for completedMonth (milestone check)...`);
+  for (const project of doneProjects) {
     const pid = project.id_string;
-    if (B.licMonth[pid]) continue; // already counted in primary loop
-    const e = await getProjectData(token, project);
-    if (e.lic > 0 && isThisMonthMs(e.lic, now)) {
+    const ms  = await getProjectM3(token, project);
+    if (ms.m3 === 'completed' && isThisMonthMs(ms.m3t, now)) {
+      const full  = await getProjectData(token, project);
       const owner = ownerMap[pid] || '';
-      B.licMonth[pid] = owner;
       if (is112(nameMap[pid] || pid)) completed112Ids.push(pid);
       else                            completedMonthIds.push(pid);
+      if (full.lic > 0 && isThisMonthMs(full.lic, now) && !B.licMonth[pid]) {
+        B.licMonth[pid] = owner;
+      }
     }
   }
   console.log(`✓ licMonth total: ${Object.keys(B.licMonth).length} (completedMonth=${completedMonthIds.length} completed112=${completed112Ids.length})`);
@@ -474,7 +501,7 @@ async function main() {
     metrics: Object.fromEntries([...METRIC_KEYS,'completedMonth','completed112'].map(k => [k, data[k].total])),
     amActive, amOnHold,
     cacheStats: { total: Object.keys(taskCache).length, hits: cacheHits, misses: cacheMisses },
-    recentlyDoneCount: recentlyDoneProjects.length,
+    doneProjectsCount: doneProjects.length,
     sampleMilestones: _debugSamples.milestones,
     sampleTasks: _debugSamples.tasks,
     ts: new Date().toISOString(),
