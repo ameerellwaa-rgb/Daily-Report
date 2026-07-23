@@ -367,42 +367,49 @@ async function main() {
 
   const now = new Date();
 
-  // Try criteria-based status filtering from Zoho API
-  console.log('Trying Zoho criteria API for On Hold & Completed...');
-  const apiOnHold    = await getProjectsByStatus(token, STATUS_ON_HOLD);
-  const apiCompleted = await getProjectsByStatus(token, STATUS_COMPLETED);
+  // Load lists from project_ids.json
+  const ids          = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
+  const activeOnlySet = new Set(ids.active_only);
+  const onHoldSet     = new Set(ids.on_hold);
 
-  let onHoldSet, doneProjectIds, projectMsMap = {};
+  // done_pids: projects we've seen before that aren't active or on_hold
+  // First run: all non-list projects become "known done" (seeds the cache)
+  // Later runs: any NEW project not in this set → auto-Active
+  const donePidCache   = taskCache._done_pids ? new Set(taskCache._done_pids) : null;
+  const isFirstRun     = donePidCache === null;
+  const updatedDonePids = new Set(taskCache._done_pids || []);
+  const projectMsMap   = {};
 
-  const criteriaWorked = apiOnHold !== null && apiCompleted !== null
-    && apiOnHold.length < projects.length && apiCompleted.length < projects.length
-    && apiOnHold.length > 0;
+  const activeProjects = [];
+  const doneProjects   = [];
 
-  if (criteriaWorked) {
-    // Full automation: Zoho status via criteria API
-    console.log(`✓ Criteria API works: onHold=${apiOnHold.length} completed=${apiCompleted.length}`);
-    onHoldSet     = new Set(apiOnHold.map(p => p.id_string));
-    doneProjectIds = new Set(apiCompleted.map(p => p.id_string));
-  } else {
-    if (apiOnHold !== null) console.log(`  Criteria ignored by API (returned ${apiOnHold?.length} for onHold) — falling back`);
-    // Fallback: project_ids.json for on_hold + milestone pre-pass for done
-    console.log('  Criteria API failed — falling back to project_ids.json + milestone pre-pass');
-    const ids  = JSON.parse(fs.readFileSync('project_ids.json', 'utf8'));
-    onHoldSet  = new Set(ids.on_hold);
-    doneProjectIds = new Set();
-    console.log(`Pre-pass: checking م3 for ${projects.length - onHoldSet.size} projects...`);
-    for (const p of projects) {
-      if (onHoldSet.has(p.id_string)) continue;
+  for (const p of projects) {
+    const pid = p.id_string;
+    if (onHoldSet.has(pid)) continue;
+    if (activeOnlySet.has(pid)) {
+      activeProjects.push(p);
+    } else if (isFirstRun || donePidCache.has(pid)) {
+      // Known done project (or first run: treat all non-list as done to seed cache)
+      doneProjects.push(p);
+      updatedDonePids.add(pid);
+    } else {
+      // Genuinely new project (appeared after first run) — check م3
       const ms = await getProjectM3(token, p);
-      projectMsMap[p.id_string] = ms;
-      if (ms.m3 === 'completed') doneProjectIds.add(p.id_string);
+      projectMsMap[pid] = ms;
+      if (ms.m3 === 'completed') {
+        doneProjects.push(p);
+        updatedDonePids.add(pid); // Remember as done for future runs
+      } else {
+        activeProjects.push(p); // Auto-Active!
+      }
     }
   }
 
-  const doneProjects   = projects.filter(p => doneProjectIds.has(p.id_string));
+  // Save updated done_pids back to cache
+  taskCache._done_pids = [...updatedDonePids];
+
   const onHoldProjects = projects.filter(p => onHoldSet.has(p.id_string));
-  const activeProjects = projects.filter(p => !doneProjectIds.has(p.id_string) && !onHoldSet.has(p.id_string));
-  console.log(`✓ active: ${activeProjects.length}  on_hold: ${onHoldProjects.length}  done: ${doneProjects.length}`);
+  console.log(`✓ active: ${activeProjects.length}  on_hold: ${onHoldProjects.length}  done: ${doneProjects.length}${isFirstRun ? ' (first run — seeding done_pids cache)' : ''}`);
 
   // Count Active / OnHold per AM for the AM summary table
   const amActive = {};
