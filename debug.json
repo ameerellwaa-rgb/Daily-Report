@@ -2,23 +2,23 @@
   "metrics": {
     "p2": 46,
     "p3": 52,
-    "recv": 42,
-    "coll": 23,
+    "recv": 44,
+    "coll": 25,
     "licMonth": 62,
     "sijilSaudi": 108,
-    "clientApproval": 56,
+    "clientApproval": 58,
     "overDue": 1,
-    "sijilDelay": 1,
+    "sijilDelay": 2,
     "sijilAmer": 2,
     "amer": 12,
     "completedMonth": 22,
     "completed112": 3
   },
   "amActive": {
+    "Jenna Ellwaa": 37,
+    "Youssef Mellwaa": 38,
     "Mostafa Ellwaa": 5,
     "fatema ellwaa": 36,
-    "Jenna Ellwaa": 36,
-    "Youssef Mellwaa": 37,
     "pola ellwaa": 55,
     "Esraa Ellwaa": 14
   },
@@ -29,12 +29,346 @@
     "Jenna Ellwaa": 4
   },
   "cacheStats": {
-    "total": 1568,
+    "total": 1572,
     "hits": 895,
-    "misses": 0
+    "misses": 4
   },
   "doneProjectsCount": 685,
-  "sampleMilestones": [],
-  "sampleTasks": [],
-  "ts": "2026-07-23T18:22:25.730Z"
+  "sampleMilestones": [
+    {
+      "end_date": "08-12-2026",
+      "flag": "internal",
+      "owner_id": "898471283",
+      "is_workfield_removed": false,
+      "link": {
+        "self": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003768102/milestones/2533013000003774223/"
+        },
+        "status": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003768102/milestones/2533013000003774223/status/"
+        }
+      },
+      "project": {
+        "name": "1085-113-1",
+        "id": "2533013000003768102"
+      },
+      "start_date_long": 1784761200000,
+      "status_det": {
+        "name": "Active",
+        "colorcode": "#398EF3",
+        "id": "2533013000000038009"
+      },
+      "end_date_long": 1786489200000,
+      "end_date_format": "08-12-2026 12:00:00 AM",
+      "owner_zpuid": "2533013000000129225",
+      "last_updated_time_long": 1784840393596,
+      "id": 2533013000003774500,
+      "start_date": "07-23-2026",
+      "created_time_long": 1784840337566,
+      "created_time": "07-23-2026",
+      "owner_name": "Jenna Ellwaa",
+      "created_time_format": "07-23-2026 09:58:57 PM",
+      "start_date_format": "07-23-2026 12:00:00 AM",
+      "sequence": 3,
+      "has_comments": "false",
+      "last_updated_time": "07-23-2026",
+      "comments_count": "0",
+      "name": "الدفعة الاولى",
+      "id_string": "2533013000003774223",
+      "closed": false,
+      "last_updated_time_format": "07-23-2026 09:59:53 PM",
+      "status": "notcompleted"
+    },
+    {
+      "end_date": "08-12-2026",
+      "flag": "internal",
+      "owner_id": "927280878",
+      "is_workfield_removed": false,
+      "link": {
+        "self": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003768019/milestones/2533013000003774008/"
+        },
+        "status": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003768019/milestones/2533013000003774008/status/"
+        }
+      },
+      "project": {
+        "name": "1084-113-1",
+        "id": "2533013000003768019"
+      },
+      "start_date_long": 1784761200000,
+      "status_det": {
+        "name": "Active",
+        "colorcode": "#398EF3",
+        "id": "2533013000000038009"
+      },
+      "end_date_long": 1786489200000,
+      "end_date_format": "08-12-2026 12:00:00 AM",
+      "owner_zpuid": "2533013000003260717",
+      "last_updated_time_long": 1784839844681,
+      "id": 2533013000003774000,
+      "start_date": "07-23-2026",
+      "created_time_long": 1784839815644,
+      "created_time": "07-23-2026",
+      "owner_name": "Youssef Mellwaa",
+      "created_time_format": "07-23-2026 09:50:15 PM",
+      "start_date_format": "07-23-2026 12:00:00 AM",
+      "sequence": 3,
+      "has_comments": "false",
+      "last_updated_time": "07-23-2026",
+      "comments_count": "0",
+      "name": "الدفعة الاولى",
+      "id_string": "2533013000003774008",
+      "closed": false,
+      "last_updated_time_format": "07-23-2026 09:50:44 PM",
+      "status": "notcompleted"
+    }
+  ],
+  "sampleTasks": [
+    {
+      "start_date_long": 1784880000000,
+      "is_comment_added": false,
+      "end_date_format": "07-24-2026 09:00:00 AM",
+      "added_via": "web",
+      "last_updated_time_long": 1784840394780,
+      "is_forum_associated": false,
+      "details": {
+        "owners": [
+          {
+            "zpuid": "2533013000000129225",
+            "full_name": "Jenna Ellwaa",
+            "work": "00:00",
+            "name": "Jenna",
+            "last_name": "Ellwaa",
+            "id": "898471283",
+            "first_name": "Jenna",
+            "email": "jennaellwaa@gmail.com"
+          }
+        ]
+      },
+      "id": 2533013000003774500,
+      "created_time": "07-23-2026",
+      "dependency": {
+        "dependencyDetails": {
+          "2533013000003774238": {
+            "PROJECTID": "2533013000003768102",
+            "DEPENDENCY_TYPE": "FS",
+            "IS_COMPLETED": false,
+            "PROJECTNAME": "1085-113-1",
+            "KEY": "10E6-T3",
+            "NAME": "عمل جروب واتس اب للعميل"
+          },
+          "2533013000003774236": {
+            "PROJECTID": "2533013000003768102",
+            "DEPENDENCY_TYPE": "SS",
+            "IS_COMPLETED": false,
+            "PROJECTNAME": "1085-113-1",
+            "KEY": "10E6-T1",
+            "NAME": "دفعة بدون فاتورة"
+          }
+        },
+        "successor": [
+          "2533013000003774238"
+        ],
+        "predecessor": [
+          "2533013000003774236"
+        ]
+      },
+      "work": "00:00",
+      "start_date_format": "07-24-2026 09:00:00 AM",
+      "isparent": false,
+      "work_type": "work_hours",
+      "completed": false,
+      "task_followers": {
+        "FOLUSERS": "",
+        "FOLLOWERSIZE": -1,
+        "FOLLOWERS": []
+      },
+      "priority": "None",
+      "task_duration_as_work": false,
+      "created_by": "887911019",
+      "last_updated_time": "07-23-2026",
+      "name": "تحويل بنكى سعودى 15 % فاتورة قيمة مضافة (تكلفة اضافية)",
+      "is_docs_assocoated": false,
+      "tasklist": {
+        "name": "دفع الدفعة الاولى",
+        "id_string": "2533013000003774226",
+        "id": "2533013000003774226"
+      },
+      "last_updated_time_format": "07-23-2026 09:59:54 PM",
+      "billingtype": "None",
+      "order_sequence": 4,
+      "status": {
+        "name": "Open",
+        "id": "2533013000000016068",
+        "type": "open",
+        "color_code": "#398EF3"
+      },
+      "end_date": "07-24-2026",
+      "milestone_id": "2533013000003774223",
+      "link": {
+        "timesheet": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003768102/tasks/2533013000003774237/logs/"
+        },
+        "web": {
+          "url": "https://projects.zoho.com/portal/ellwaadotonline#zp/task-detail/2533013000003774237"
+        },
+        "self": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003768102/tasks/2533013000003774237/"
+        }
+      },
+      "description": "",
+      "created_by_zpuid": "2533013000000059003",
+      "work_form": "standard_work",
+      "end_date_long": 1784880000000,
+      "duration": "0",
+      "created_by_email": "ellwaa@ellwaa.org",
+      "key": "10E6-T2",
+      "start_date": "07-24-2026",
+      "created_person": "Walid Mohsen",
+      "created_time_long": 1784840337566,
+      "is_reminder_set": false,
+      "is_recurrence_set": false,
+      "created_time_format": "07-23-2026 09:58:57 PM",
+      "created_by_full_name": "Walid Mohsen",
+      "subtasks": false,
+      "duration_type": "days",
+      "percent_complete": "0",
+      "GROUP_NAME": {
+        "ASSOCIATED_TEAMS": {
+          "AnyTeam": "Not Associated"
+        },
+        "ASSOCIATED_TEAMS_COUNT": 0,
+        "IS_TEAM_UNASSIGNED": true
+      },
+      "id_string": "2533013000003774237",
+      "log_hours": {
+        "non_billable_hours": "0.0",
+        "billable_hours": "0.0"
+      }
+    },
+    {
+      "start_date_long": 1784880000000,
+      "is_comment_added": false,
+      "end_date_format": "07-24-2026 09:00:00 AM",
+      "added_via": "web",
+      "last_updated_time_long": 1784839846034,
+      "is_forum_associated": false,
+      "details": {
+        "owners": [
+          {
+            "zpuid": "2533013000003260717",
+            "full_name": "Youssef Mellwaa",
+            "work": "00:00",
+            "name": "Youssef Mellwaa",
+            "last_name": "Mellwaa",
+            "id": "927280878",
+            "first_name": "Youssef",
+            "email": "mellwaayoussef@gmail.com"
+          }
+        ]
+      },
+      "id": 2533013000003774000,
+      "created_time": "07-23-2026",
+      "dependency": {
+        "dependencyDetails": {
+          "2533013000003774021": {
+            "PROJECTID": "2533013000003768019",
+            "DEPENDENCY_TYPE": "SS",
+            "IS_COMPLETED": false,
+            "PROJECTNAME": "1084-113-1",
+            "KEY": "10BQ-T1",
+            "NAME": "دفعة بدون فاتورة"
+          },
+          "2533013000003774023": {
+            "PROJECTID": "2533013000003768019",
+            "DEPENDENCY_TYPE": "FS",
+            "IS_COMPLETED": false,
+            "PROJECTNAME": "1084-113-1",
+            "KEY": "10BQ-T3",
+            "NAME": "عمل جروب واتس اب للعميل"
+          }
+        },
+        "successor": [
+          "2533013000003774023"
+        ],
+        "predecessor": [
+          "2533013000003774021"
+        ]
+      },
+      "work": "00:00",
+      "start_date_format": "07-24-2026 09:00:00 AM",
+      "isparent": false,
+      "work_type": "work_hours",
+      "completed": false,
+      "task_followers": {
+        "FOLUSERS": "",
+        "FOLLOWERSIZE": -1,
+        "FOLLOWERS": []
+      },
+      "priority": "None",
+      "task_duration_as_work": false,
+      "created_by": "887911019",
+      "last_updated_time": "07-23-2026",
+      "name": "تحويل بنكى سعودى 15 % فاتورة قيمة مضافة (تكلفة اضافية)",
+      "is_docs_assocoated": false,
+      "tasklist": {
+        "name": "دفع الدفعة الاولى",
+        "id_string": "2533013000003774011",
+        "id": "2533013000003774011"
+      },
+      "last_updated_time_format": "07-23-2026 09:50:46 PM",
+      "billingtype": "None",
+      "order_sequence": 4,
+      "status": {
+        "name": "Open",
+        "id": "2533013000000016068",
+        "type": "open",
+        "color_code": "#398EF3"
+      },
+      "end_date": "07-24-2026",
+      "milestone_id": "2533013000003774008",
+      "link": {
+        "timesheet": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003768019/tasks/2533013000003774022/logs/"
+        },
+        "web": {
+          "url": "https://projects.zoho.com/portal/ellwaadotonline#zp/task-detail/2533013000003774022"
+        },
+        "self": {
+          "url": "https://projectsapi.zoho.com/restapi/portal/896030705/projects/2533013000003768019/tasks/2533013000003774022/"
+        }
+      },
+      "description": "",
+      "created_by_zpuid": "2533013000000059003",
+      "work_form": "standard_work",
+      "end_date_long": 1784880000000,
+      "duration": "0",
+      "created_by_email": "ellwaa@ellwaa.org",
+      "key": "10BQ-T2",
+      "start_date": "07-24-2026",
+      "created_person": "Walid Mohsen",
+      "created_time_long": 1784839815644,
+      "is_reminder_set": false,
+      "is_recurrence_set": false,
+      "created_time_format": "07-23-2026 09:50:15 PM",
+      "created_by_full_name": "Walid Mohsen",
+      "subtasks": false,
+      "duration_type": "days",
+      "percent_complete": "0",
+      "GROUP_NAME": {
+        "ASSOCIATED_TEAMS": {
+          "AnyTeam": "Not Associated"
+        },
+        "ASSOCIATED_TEAMS_COUNT": 0,
+        "IS_TEAM_UNASSIGNED": true
+      },
+      "id_string": "2533013000003774022",
+      "log_hours": {
+        "non_billable_hours": "0.0",
+        "billable_hours": "0.0"
+      }
+    }
+  ],
+  "ts": "2026-07-24T13:08:52.989Z"
 }
